@@ -636,6 +636,7 @@ generate_initial_workplaces <- function(
 #' which day. The value 0 indicates that the person stays in on that day.
 #'
 #' @inheritParams create_variables
+#' @param leisure_setting_sizes The sizes of the leisure settings as sampled using `sample_negbinom()`
 #'
 #' @family variables
 #' @export
