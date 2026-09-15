@@ -102,14 +102,13 @@
 #' * `wells_riley_respiratory_rate_factor`: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45
 #' * `wells_riley_time_in_room`: exposure window used inside the Wells-Riley calculation (denoted t); units = hours; default = 4
 #'
-#' Intervention Parameters (populated internally by `set_intervention_ach()` and by `generate_intervention_switches()`; users do not normally set these directly. One block per scope, where `<s>` is one of `joint`, `workplace`, `school`, `leisure` or `household`):
+#' Intervention Parameters (populated by `set_intervention_ach()`; users do not normally set these directly. One block per scope, where `<s>` is one of `joint`, `workplace`, `school`, `leisure` or `household`):
 #' * `intervention_<s>_active`: boolean flag set to TRUE when an intervention has been installed in scope <s>. Default = FALSE
 #' * `intervention_<s>_list`: list of intervention objects (each as returned by `make_intervention()`) deployed in scope <s>. Currently single-intervention only — list always has length 1 when active. Default = NULL
 #' * `intervention_<s>_coverage`: fraction of total setting size to cover (numeric in `[0, 1]`); inherited from the intervention object's `coverage` field. Default = NULL
 #' * `intervention_<s>_coverage_target`: what the coverage fraction applies to. Either "individuals" or "square_footage". Default = NULL
 #' * `intervention_<s>_coverage_type`: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of riskiness). Default = NULL
 #' * `intervention_<s>_timestep`: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
-#' * `intervention_<setting>_covered` (per-setting scopes only — workplace/school/leisure/household): 0/1 vector of length equal to the number of locations in the setting, populated by the dispatcher to mark which locations received the intervention. Default = NULL
 #'
 #' Setting-Specific Room Size Per Individual Parameters:
 #' * `size_per_individual_workplace`: The volume or surface area for each individual in the workplace setting type; default = 1 (in which case "square_footage" coverage_target gives same results as "individuals" coverage_target)
@@ -232,7 +231,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_workplace_coverage_target = NULL,
     intervention_workplace_coverage_type   = NULL,
     intervention_workplace_timestep        = NULL,
-    intervention_workplace_covered         = NULL,
 
     intervention_school_active             = FALSE,
     intervention_school_list               = NULL,
@@ -240,7 +238,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_school_coverage_target    = NULL,
     intervention_school_coverage_type      = NULL,
     intervention_school_timestep           = NULL,
-    intervention_school_covered            = NULL,
 
     intervention_leisure_active            = FALSE,
     intervention_leisure_list              = NULL,
@@ -248,7 +245,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_leisure_coverage_target   = NULL,
     intervention_leisure_coverage_type     = NULL,
     intervention_leisure_timestep          = NULL,
-    intervention_leisure_covered           = NULL,
 
     intervention_household_active          = FALSE,
     intervention_household_list            = NULL,
@@ -256,7 +252,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_household_coverage_target = NULL,
     intervention_household_coverage_type   = NULL,
     intervention_household_timestep        = NULL,
-    intervention_household_covered         = NULL,
 
     # Room Size Per Individual Parameters: (currently used for coverage allocation)
     size_per_individual_workplace = 1,
@@ -456,5 +451,5 @@ get_parameters <- function(overrides = list(), archetype = "none") {
   ## ADD MORE CHECKS IN HERE FOR PARAMETERS ##
 
   # Return the list of parameters
-  parameters
+  as_strict_list(parameters, name = "parameters")
 }

@@ -33,7 +33,7 @@ to \code{ach}.
 
 For every setting used in a simulation, the user must call either
 \code{\link[=set_setting_specific_ach]{set_setting_specific_ach()}} (distribution) or \code{\link[=set_default_ach]{set_default_ach()}}
-(uniform); otherwise \code{create_variables()} will error.
+(uniform); otherwise \code{generate_population_data()} will error.
 }
 \seealso{
 Other setting-specific ACH: 
