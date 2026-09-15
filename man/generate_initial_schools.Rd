@@ -12,17 +12,15 @@ generate_initial_schools(parameters_list, initial_age_classes)
 \item{initial_age_classes}{A character vector assigning an age class to each individual}
 }
 \description{
-Generate a vector of school assignments for all individuals in the population
+School sizes are sampled with replacement from a reference dataset. This is
+known as bootstrapping. The dataset used is \code{\link{schools_usa}}.
 }
 \seealso{
 Other variables: 
 \code{\link{create_variables}()},
-\code{\link{generate_initial_age_classes}()},
 \code{\link{generate_initial_disease_states}()},
 \code{\link{generate_initial_households}()},
-\code{\link{generate_initial_households_bootstrap}()},
 \code{\link{generate_initial_leisure}()},
-\code{\link{generate_initial_schools_bootstrap}()},
 \code{\link{generate_initial_workplaces}()}
 }
 \concept{variables}

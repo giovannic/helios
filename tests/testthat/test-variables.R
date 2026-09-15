@@ -91,123 +91,6 @@ test_that("generate_initial_disease_states returns vector containing only suscep
   expect_contains(initial_disease_states, disease_states)
 })
 
-#========================================#
-#===== generate_initial_age_classes =====#
-#========================================#
-
-test_that("generate_initial_age_classes errors if parameter list does not contain initial_proportion_child parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the initial_proportion_child parameter:
-  parameters_list$initial_proportion_child <- NULL
-
-  # Check that generate_initial_age_classes() errors when initial_proportion_child not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called initial_proportion_child"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain initial_proportion_adult parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the initial_proportion_adult parameter:
-  parameters_list$initial_proportion_adult <- NULL
-
-  # Check that generate_initial_age_classes() errors when initial_proportion_adult not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called initial_proportion_adult"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain initial_proportion_elderly parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the initial_proportion_elderly parameter:
-  parameters_list$initial_proportion_elderly <- NULL
-
-  # Check that generate_initial_age_classes() errors when initial_proportion_elderly not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called initial_proportion_elderly"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain human_population parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the human_population parameter:
-  parameters_list$human_population <- NULL
-
-  # Check that generate_initial_age_classes() errors when human_population not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called human_population"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain seed parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the seed parameter:
-  parameters_list$seed <- NULL
-
-  # Check that generate_initial_age_classes() errors when seed not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called seed"
-  )
-})
-
-test_that("generate_initial_age_classes contains only the expected age classes", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters(
-    overrides = list(
-      initial_proportion_child = 0.5,
-      initial_proportion_adult = 0.2,
-      initial_proportion_elderly = 0.3,
-      human_population = 1000,
-      number_initial_S = 995
-    )
-  )
-
-  # Generate the initial age classes:
-  initial_age_classes <- generate_initial_age_classes(
-    parameters_list = parameters_list
-  )
-
-  # Store the age classes:
-  age_classes <- c("child", "adult", "elderly")
-
-  # Check that all values in the initial age classes are child, adult, or elderly
-  expect_contains(object = unique(initial_age_classes), expected = age_classes)
-})
-
-test_that("generate_initial_age_classes errors if initial age class proportions do not sum to 1", {
-  # Establish parameter list with initial child proportion >1
-  parameters_list <- get_parameters(
-    overrides = list(initial_proportion_child = 1.2)
-  )
-
-  # Check that the generate_initial_age_classes function errors when age class proportions do not
-  # sum to 1:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "initial age class proportions do not sum to 1"
-  )
-})
-
 #====================================#
 #===== generate_initial_schools =====#
 #====================================#
@@ -252,46 +135,6 @@ test_that("generate_initial_schools errors if parameter_list does not contain se
   )
 })
 
-test_that("generate_initial_schools errors if parameter_list does not contain school_meanlog", {
-  # Establish the list of model parameters:
-  parameters_list <- with_default_ach(get_parameters())
-
-  # Generate the population data:
-  population_data <- generate_population_data(parameters_list)
-
-  # Remove school_meanlog from the parameters list:
-  parameters_list$school_meanlog <- NULL
-
-  # Check that the generate_initial_schools() function errors due to missing school_meanlog parameter:
-  expect_error(
-    object = generate_initial_schools(
-      parameters_list = parameters_list,
-      initial_age_classes = population_data$age_classes
-    ),
-    regexp = "parameters list must contain a variable called school_meanlog"
-  )
-})
-
-test_that("generate_initial_schools errors if parameter_list does not contain school_sdlog", {
-  # Establish the list of model parameters:
-  parameters_list <- with_default_ach(get_parameters())
-
-  # Generate the population data:
-  population_data <- generate_population_data(parameters_list)
-
-  # Remove school_meanlog from the parameters list:
-  parameters_list$school_sdlog <- NULL
-
-  # Check that the generate_initial_schools() function errors due to missing school_sdlog parameter:
-  expect_error(
-    object = generate_initial_schools(
-      parameters_list = parameters_list,
-      initial_age_classes = population_data$age_classes
-    ),
-    regexp = "parameters list must contain a variable called school_sdlog"
-  )
-})
-
 test_that("generate_initial_schools errors if parameter_list does not contain school_student_staff_ratio", {
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
@@ -299,7 +142,7 @@ test_that("generate_initial_schools errors if parameter_list does not contain sc
   # Generate the population data:
   population_data <- generate_population_data(parameters_list)
 
-  # Remove school_meanlog from the parameters list:
+  # Remove school_student_staff_ratio from the parameters list:
   parameters_list$school_student_staff_ratio <- NULL
 
   # Check that the generate_initial_schools() function errors due to missing school_student_staff_ratio parameter:
@@ -380,10 +223,6 @@ test_that("generate_initial_schools assigns no elderly individuals to any school
     0
   )
 })
-
-#==============================================#
-#===== generate_initial_schools_bootstrap =====#
-#==============================================#
 
 #=======================================#
 #===== generate_initial_workplaces =====#
@@ -501,7 +340,3 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
 #=======================================#
 #===== generate_initial_households =====#
 #=======================================#
-
-#=================================================#
-#===== generate_initial_households_bootstrap =====#
-#=================================================#

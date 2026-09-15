@@ -51,8 +51,6 @@ check_population_invariant <- function(parameters) {
 
 test_that("population data invariants", {
   check_population_invariant(with_default_ach(get_parameters()))
-  check_population_invariant(with_default_ach(get_parameters(list(household_distribution_country = "custom"))))
-  check_population_invariant(with_default_ach(get_parameters(list(school_distribution_country = "custom"))))
 })
 
 test_that("run_simulation() gives the same result whether or not the population is provided", {

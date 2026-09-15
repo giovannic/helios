@@ -113,8 +113,6 @@ data.frame("State" = disease_states, "Count" = disease_state_counts) |>
 There are three age classes: children, adults, and the elderly. The age of each individual remains fixed throughout the simulation.
 
 ```{r}
-parameters_list[c("initial_proportion_child", "initial_proportion_adult", "initial_proportion_elderly")]
-
 age_classes <- variables_list$age_class$get_categories()
 age_class_counts <- purrr::map_vec(age_classes, function(x) variables_list$age_class$get_size_of(values = x))
 

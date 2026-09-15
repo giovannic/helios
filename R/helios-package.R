@@ -10,11 +10,8 @@ NULL
 
 # Package datasets and data frame columns referenced without quotes
 utils::globalVariables(c(
-  "baseline_household_demographics_uk",
   "baseline_household_demographics_usa",
   "beta_total",
-  "index",
-  "schools_uk",
   "schools_usa",
   "type"
 ))
