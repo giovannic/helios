@@ -4,7 +4,10 @@
 #' @param state Optional simulation state from a previous run, as returned in the
 #'   `state` element of the output list. When provided, the simulation resumes from
 #'   this state. `simulation_time` controls the number of *additional* timesteps to
-#'   run (not the absolute end time). Default is `NULL` (start fresh).
+#'   run (not the absolute end time). With time-varying transmission, beta
+#'   vectors are indexed by day from the start of the original run, so they must
+#'   have a value for every day up to the end of the resumed run. Default is
+#'   `NULL` (start fresh).
 #'
 #' @return A list with two elements:
 #'   \describe{
@@ -68,6 +71,25 @@ run_simulation <- function(parameters_list, state = NULL) {
   }
   seed_rng(parameters_list$seed)
 
+  # simulation_loop() takes an absolute end timestep, so when resuming, run
+  # simulation_time's worth of timesteps on from where the saved state ended:
+  start_timestep <- if (is.null(state)) 0 else state$timesteps
+  timesteps <- start_timestep + round(parameters_list$simulation_time / parameters_list$dt)
+
+  # Time-varying betas are indexed by day counted from the start of the original
+  # run, so they must have a value for every day up to the end of this call:
+  if (isTRUE(parameters_list$time_varying_transmission_on)) {
+    end_day <- timestep_to_day(timesteps, parameters_list$dt)
+    beta_names <- c("beta_household", "beta_workplace", "beta_school", "beta_leisure", "beta_community")
+    if (any(lengths(parameters_list[beta_names]) < end_day)) {
+      stop(
+        "when time_varying_transmission_on is TRUE, all setting-specific betas must have a value for every day up to day ",
+        end_day,
+        " (the end of this run, counting from the start of any run it resumes)"
+      )
+    }
+  }
+
   # Generate the model variables:
   variables_list <- create_variables(parameters_list)
   parameters_list <- variables_list$parameters_list  # note: this could be written more nicely and in a way
@@ -78,11 +100,6 @@ run_simulation <- function(parameters_list, state = NULL) {
     variables_list = variables_list,
     parameters_list = parameters_list
   )
-
-  # simulation_loop() takes an absolute end timestep, so when resuming, run
-  # simulation_time's worth of timesteps on from where the saved state ended:
-  start_timestep <- if (is.null(state)) 0 else state$timesteps
-  timesteps <- start_timestep + round(parameters_list$simulation_time / parameters_list$dt)
 
   # Set up the model renderer:
   renderer <- individual::Render$new(timesteps)
