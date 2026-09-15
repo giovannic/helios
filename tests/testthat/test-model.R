@@ -1,3 +1,39 @@
+small_test_parameters <- function(simulation_time) {
+  parameters <- get_parameters(overrides = list(
+    simulation_time = simulation_time,
+    seed = 1,
+    human_population = 1000,
+    number_initial_S = 990,
+    number_initial_E = 10
+  ))
+  for (setting in c("household", "workplace", "school", "leisure")) {
+    parameters <- set_default_ach(parameters, setting, 4)
+  }
+  parameters
+}
+
+test_that("run_simulation() is reproducible for a given seed", {
+  parameters <- small_test_parameters(simulation_time = 5)
+
+  first <- run_simulation(parameters)$result
+  second <- run_simulation(parameters)$result
+
+  expect_identical(first, second)
+})
+
+test_that("run_simulation() resumed from a saved state matches an uninterrupted run", {
+  parameters <- small_test_parameters(simulation_time = 6)
+  full <- run_simulation(parameters)$result
+
+  parameters$simulation_time <- 3
+  part_one <- run_simulation(parameters)
+  part_two <- run_simulation(parameters, state = part_one$state)
+
+  expect_equal(part_two$result$timestep, (3 / parameters$dt + 1):(6 / parameters$dt))
+  resumed <- rbind(part_one$result, part_two$result)
+  expect_equal(resumed, full)
+})
+
 test_that("run_simulations_from_table() errors when the parameter_table input contains unrecognised column names", {
   # Set up example parameter table input:
   parameter_table <- data.frame(

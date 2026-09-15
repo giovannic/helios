@@ -328,7 +328,7 @@ generate_initial_disease_states <- function(parameters_list) {
   }
 
   # Set the seed from the parameter list:
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   # Create a vector of disease states of length human_population:
   initial_disease_states <- rep("S", parameters_list$human_population)
@@ -410,7 +410,7 @@ generate_initial_age_classes <- function(parameters_list) {
   }
 
   # Set the seed stored in the parameter list:
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   # Store age group proportions in a single vector:
   age_group_proportions <- c(
@@ -458,7 +458,7 @@ generate_initial_schools <- function(parameters_list, age_class_variable) {
     )
   }
 
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   # Assign children to schools
   num_children <- age_class_variable$get_size_of("child")
@@ -532,7 +532,7 @@ generate_initial_schools_bootstrap <- function(
   }
 
   # Calculating number of children and assigning them to schools
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   if (parameters_list$school_distribution_country == "UK") {
     empirical_school_sizes <- schools_uk$`headcount of pupils`
@@ -645,7 +645,7 @@ generate_initial_workplaces <- function(
   }
 
   # Calculating number of unassigned adults and assigning them to workplaces
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
   index_not_school <- school_variable$get_index_of(values = c("0"))$to_vector()
   index_adults <- age_class_variable$get_index_of("adult")$to_vector()
   index_unassigned_adults <- intersect(index_not_school, index_adults)
@@ -711,7 +711,7 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
   }
 
   # Setting the seed
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   # Calculating the number of leisure visits that each person makes per week
   leisure_visits_per_person_per_week <- rpois(
@@ -782,7 +782,7 @@ generate_initial_households <- function(parameters_list, age_class_variable) {
   }
 
   # Setting seed
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   ## Checking population size N is the same as implied by age_class_variable
   if (

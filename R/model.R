@@ -66,7 +66,7 @@ run_simulation <- function(parameters_list, state = NULL) {
   if (!("seed" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called seed")
   }
-  set.seed(parameters_list$seed)
+  seed_rng(parameters_list$seed)
 
   # Generate the model variables:
   variables_list <- create_variables(parameters_list)
@@ -79,8 +79,12 @@ run_simulation <- function(parameters_list, state = NULL) {
     parameters_list = parameters_list
   )
 
+  # simulation_loop() takes an absolute end timestep, so when resuming, run
+  # simulation_time's worth of timesteps on from where the saved state ended:
+  start_timestep <- if (is.null(state)) 0 else state$timesteps
+  timesteps <- start_timestep + round(parameters_list$simulation_time / parameters_list$dt)
+
   # Set up the model renderer:
-  timesteps <- round(parameters_list$simulation_time / parameters_list$dt)
   renderer <- individual::Render$new(timesteps)
 
   # Generate the model processes:
@@ -91,15 +95,33 @@ run_simulation <- function(parameters_list, state = NULL) {
     renderer = renderer
   )
 
+  # individual only saves base R's RNG state, so continue dqrng's stream separately:
+  if (!is.null(state)) {
+    dqrng::dqrng_set_state(state$dqrng)
+  }
+
   # Use individual::simulation_loop() to run the model for the specified number of timesteps
-  final_state <- individual::simulation_loop(
+  individual_state <- individual::simulation_loop(
     variables = variables_list,
     events = unlist(events_list),
     processes = processes_list,
     timesteps = timesteps,
-    state = state
+    state = state$individual,
+    # Continue the saved RNG stream so a resumed run matches an uninterrupted one
+    restore_random_state = TRUE
   )
-  list(result = renderer$to_dataframe(), state = final_state)
+
+  final_state <- list(
+    timesteps = timesteps,
+    individual = individual_state,
+    dqrng = dqrng::dqrng_get_state()
+  )
+
+  # Only return the timesteps simulated in this call:
+  result <- renderer$to_dataframe()
+  result <- result[result$timestep > start_timestep, , drop = FALSE]
+  rownames(result) <- NULL
+  list(result = result, state = final_state)
 }
 
 #' Run helios simulations using table of parameter values
