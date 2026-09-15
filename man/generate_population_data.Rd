@@ -15,3 +15,13 @@ other locations. It also draws the baseline ACH and riskiness of each
 location. Interventions are not part of the population: see
 \code{\link[=generate_intervention_data]{generate_intervention_data()}}.
 }
+\seealso{
+Other variables: 
+\code{\link{create_variables}()},
+\code{\link{generate_initial_disease_states}()},
+\code{\link{generate_initial_households}()},
+\code{\link{generate_initial_leisure}()},
+\code{\link{generate_initial_schools}()},
+\code{\link{generate_initial_workplaces}()}
+}
+\concept{variables}
