@@ -91,123 +91,6 @@ test_that("generate_initial_disease_states returns vector containing only suscep
   expect_contains(initial_disease_states, disease_states)
 })
 
-#========================================#
-#===== generate_initial_age_classes =====#
-#========================================#
-
-test_that("generate_initial_age_classes errors if parameter list does not contain initial_proportion_child parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the initial_proportion_child parameter:
-  parameters_list$initial_proportion_child <- NULL
-
-  # Check that generate_initial_age_classes() errors when initial_proportion_child not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called initial_proportion_child"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain initial_proportion_adult parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the initial_proportion_adult parameter:
-  parameters_list$initial_proportion_adult <- NULL
-
-  # Check that generate_initial_age_classes() errors when initial_proportion_adult not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called initial_proportion_adult"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain initial_proportion_elderly parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the initial_proportion_elderly parameter:
-  parameters_list$initial_proportion_elderly <- NULL
-
-  # Check that generate_initial_age_classes() errors when initial_proportion_elderly not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called initial_proportion_elderly"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain human_population parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the human_population parameter:
-  parameters_list$human_population <- NULL
-
-  # Check that generate_initial_age_classes() errors when human_population not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called human_population"
-  )
-})
-
-test_that("generate_initial_age_classes errors if parameter list does not contain seed parameter", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters()
-
-  # Remove the seed parameter:
-  parameters_list$seed <- NULL
-
-  # Check that generate_initial_age_classes() errors when seed not in the parameters
-  # list:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "parameters list must contain a variable called seed"
-  )
-})
-
-test_that("generate_initial_age_classes contains only the expected age classes", {
-  # Establish the list of model parameters:
-  parameters_list <- get_parameters(
-    overrides = list(
-      initial_proportion_child = 0.5,
-      initial_proportion_adult = 0.2,
-      initial_proportion_elderly = 0.3,
-      human_population = 1000,
-      number_initial_S = 995
-    )
-  )
-
-  # Generate the initial age classes:
-  initial_age_classes <- generate_initial_age_classes(
-    parameters_list = parameters_list
-  )
-
-  # Store the age classes:
-  age_classes <- c("child", "adult", "elderly")
-
-  # Check that all values in the initial age classes are child, adult, or elderly
-  expect_contains(object = unique(initial_age_classes), expected = age_classes)
-})
-
-test_that("generate_initial_age_classes errors if initial age class proportions do not sum to 1", {
-  # Establish parameter list with initial child proportion >1
-  parameters_list <- get_parameters(
-    overrides = list(initial_proportion_child = 1.2)
-  )
-
-  # Check that the generate_initial_age_classes function errors when age class proportions do not
-  # sum to 1:
-  expect_error(
-    object = generate_initial_age_classes(parameters_list = parameters_list),
-    regexp = "initial age class proportions do not sum to 1"
-  )
-})
-
 #====================================#
 #===== generate_initial_schools =====#
 #====================================#
@@ -216,14 +99,8 @@ test_that("generate_initial_schools errors if parameter_list does not contain hu
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Remove human_population from the parameters list:
   parameters_list$human_population <- NULL
@@ -232,7 +109,7 @@ test_that("generate_initial_schools errors if parameter_list does not contain hu
   expect_error(
     object = generate_initial_schools(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class
+      initial_age_classes = population_data$age_classes
     ),
     regexp = "parameters list must contain a variable called human_population"
   )
@@ -242,14 +119,8 @@ test_that("generate_initial_schools errors if parameter_list does not contain se
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Remove seed from the parameters list:
   parameters_list$seed <- NULL
@@ -258,61 +129,9 @@ test_that("generate_initial_schools errors if parameter_list does not contain se
   expect_error(
     object = generate_initial_schools(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class
+      initial_age_classes = population_data$age_classes
     ),
     regexp = "parameters list must contain a variable called seed"
-  )
-})
-
-test_that("generate_initial_schools errors if parameter_list does not contain school_meanlog", {
-  # Establish the list of model parameters:
-  parameters_list <- with_default_ach(get_parameters())
-
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
-
-  # Remove school_meanlog from the parameters list:
-  parameters_list$school_meanlog <- NULL
-
-  # Check that the generate_initial_schools() function errors due to missing school_meanlog parameter:
-  expect_error(
-    object = generate_initial_schools(
-      parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class
-    ),
-    regexp = "parameters list must contain a variable called school_meanlog"
-  )
-})
-
-test_that("generate_initial_schools errors if parameter_list does not contain school_sdlog", {
-  # Establish the list of model parameters:
-  parameters_list <- with_default_ach(get_parameters())
-
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
-
-  # Remove school_meanlog from the parameters list:
-  parameters_list$school_sdlog <- NULL
-
-  # Check that the generate_initial_schools() function errors due to missing school_sdlog parameter:
-  expect_error(
-    object = generate_initial_schools(
-      parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class
-    ),
-    regexp = "parameters list must contain a variable called school_sdlog"
   )
 })
 
@@ -320,23 +139,17 @@ test_that("generate_initial_schools errors if parameter_list does not contain sc
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
-
-  # Remove school_meanlog from the parameters list:
+  # Remove school_student_staff_ratio from the parameters list:
   parameters_list$school_student_staff_ratio <- NULL
 
   # Check that the generate_initial_schools() function errors due to missing school_student_staff_ratio parameter:
   expect_error(
     object = generate_initial_schools(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class
+      initial_age_classes = population_data$age_classes
     ),
     regexp = "parameters list must contain a variable called school_student_staff_ratio"
   )
@@ -346,19 +159,13 @@ test_that("generate_initial_schools returns a vector equal in length to the numb
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Generate the vector of initial schools:
   initial_schools <- generate_initial_schools(
     parameters_list = parameters_list,
-    age_class_variable = variables_list$age_class
+    initial_age_classes = population_data$age_classes
   )
 
   # Check that the schools object has entries for each individual in the population:
@@ -372,28 +179,18 @@ test_that("generate_initial_schools assigns at least one adult to each school", 
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Generate the vector of initial schools:
   initial_schools <- generate_initial_schools(
     parameters_list = parameters_list,
-    age_class_variable = variables_list$age_class
+    initial_age_classes = population_data$age_classes
   )
 
   # Get the indices of all adults in the population:
-  adult_age_class_indices <- variables_list$age_class$get_index_of(
-    "adult"
-  )$to_vector()
-  elderly_age_class_indices <- variables_list$age_class$get_index_of(
-    "elderly"
-  )$to_vector()
+  adult_age_class_indices <- which(population_data$age_classes == "adult")
+  elderly_age_class_indices <- which(population_data$age_classes == "elderly")
 
   # Check that all schools have at least one adult assigned to them:
   expect_true(all(
@@ -408,25 +205,17 @@ test_that("generate_initial_schools assigns no elderly individuals to any school
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Generate the vector of initial schools:
   initial_schools <- generate_initial_schools(
     parameters_list = parameters_list,
-    age_class_variable = variables_list$age_class
+    initial_age_classes = population_data$age_classes
   )
 
   # Get the indices of all elderly individuals in the population:
-  elderly_age_class_indices <- variables_list$age_class$get_index_of(
-    "elderly"
-  )$to_vector()
+  elderly_age_class_indices <- which(population_data$age_classes == "elderly")
 
   # Check that all schools have no elderly individuals assigned to them:
   expect_identical(
@@ -434,10 +223,6 @@ test_that("generate_initial_schools assigns no elderly individuals to any school
     0
   )
 })
-
-#==============================================#
-#===== generate_initial_schools_bootstrap =====#
-#==============================================#
 
 #=======================================#
 #===== generate_initial_workplaces =====#
@@ -447,14 +232,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Remove human_population from the parameters list:
   parameters_list$human_population <- NULL
@@ -463,8 +242,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   expect_error(
     object = generate_initial_workplaces(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class,
-      school_variable = variables_list$school
+      initial_age_classes = population_data$age_classes,
+      initial_school_settings = population_data$initial_school_settings
     ),
     regexp = "parameters list must contain a variable called human_population"
   )
@@ -474,14 +253,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Remove seed from the parameters list:
   parameters_list$seed <- NULL
@@ -490,8 +263,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   expect_error(
     object = generate_initial_workplaces(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class,
-      school_variable = variables_list$school
+      initial_age_classes = population_data$age_classes,
+      initial_school_settings = population_data$initial_school_settings
     ),
     regexp = "parameters list must contain a variable called seed"
   )
@@ -501,14 +274,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Remove workplace_prop_max from the parameters list:
   parameters_list$workplace_prop_max <- NULL
@@ -517,8 +284,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   expect_error(
     object = generate_initial_workplaces(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class,
-      school_variable = variables_list$school
+      initial_age_classes = population_data$age_classes,
+      initial_school_settings = population_data$initial_school_settings
     ),
     regexp = "parameters list must contain a variable called workplace_prop_max"
   )
@@ -528,14 +295,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Remove workplace_a from the parameters list:
   parameters_list$workplace_a <- NULL
@@ -544,8 +305,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   expect_error(
     object = generate_initial_workplaces(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class,
-      school_variable = variables_list$school
+      initial_age_classes = population_data$age_classes,
+      initial_school_settings = population_data$initial_school_settings
     ),
     regexp = "parameters list must contain a variable called workplace_a"
   )
@@ -555,14 +316,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   # Establish the list of model parameters:
   parameters_list <- with_default_ach(get_parameters())
 
-  # Establish the list of model variables:
-  vars_and_params <- create_variables(parameters_list = parameters_list)
-
-  # Retrieve the variables from the create_variables() outputs:
-  variables_list <- vars_and_params[[1]]
-
-  # Re-establish the model parameters list:
-  parameters_list <- vars_and_params[[2]]
+  # Generate the population data:
+  population_data <- generate_population_data(parameters_list)
 
   # Remove workplace_c from the parameters list:
   parameters_list$workplace_c <- NULL
@@ -571,8 +326,8 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
   expect_error(
     object = generate_initial_workplaces(
       parameters_list = parameters_list,
-      age_class_variable = variables_list$age_class,
-      school_variable = variables_list$school
+      initial_age_classes = population_data$age_classes,
+      initial_school_settings = population_data$initial_school_settings
     ),
     regexp = "parameters list must contain a variable called workplace_c"
   )
@@ -585,7 +340,3 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
 #=======================================#
 #===== generate_initial_households =====#
 #=======================================#
-
-#=================================================#
-#===== generate_initial_households_bootstrap =====#
-#=================================================#

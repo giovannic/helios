@@ -8,21 +8,14 @@
 #' These parameters are:
 #'
 #' * `human_population`: the number of humans to include in the model
-#' * `initial_proportion_child`: proportion of population initially in the 'child' age class
-#' * `initial_proportion_adult`: proportion of population initially in the 'adult' age class
-#' * `initial_proportion_elderly`: proportion of population initially in the 'elderly' age class
 #' * `number_initial_S`: number of humans initially Susceptible (state = S)
 #' * `number_initial_E`: number of humans initially Exposed (state = E)
 #' * `number_initial_I`: number of humans initially Infectious (state = I)
 #' * `number_initial_R`: number of humans initially Recovered (state = R)
 #' * `seed`: a seed to run the simulation with
-#' * `mean_household_size`: TBD
 #' * `workplace_prop_max`: maximum size of a workplace as a proportion of total adult population size
 #' * `workplace_a`: the a parameter for the Zipf-like distribution on workplace size
 #' * `workplace_c`: the c parameter for the Zipf-like distribution on workplace size
-#' * `school_prop_max`: maximum size of a school as a proporiton of total child population size
-#' * `school_meanlog`: the meanlog parameter for the log-normal distribution on school size
-#' * `school_sdlog`: the sdlog parameter for the log-normal distribution on school size
 #' * `school_student_staff_ratio`: the number of students to each adult staff member
 #' * `leisure_mean_number_settings`: TBD
 #' * `leisure_mean_size`: TBD
@@ -59,9 +52,6 @@
 #'   resuming from a saved state the vectors must cover the whole run.
 #' * `dt`: TBD
 #' * `simulation_time`: TBD
-#' * `household_distribution_country`: TBD
-#' * `school_distribution_country`: TBD
-#' * `workplace_distribution_country`: TBD
 #' * `endemic_or_epidemic`: TBD
 #' * `duration_immune`: TBD
 #' * `prob_inf_external`: TBD
@@ -102,14 +92,13 @@
 #' * `wells_riley_respiratory_rate_factor`: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45
 #' * `wells_riley_time_in_room`: exposure window used inside the Wells-Riley calculation (denoted t); units = hours; default = 4
 #'
-#' Intervention Parameters (populated internally by `set_intervention_ach()` and by `generate_intervention_switches()`; users do not normally set these directly. One block per scope, where `<s>` is one of `joint`, `workplace`, `school`, `leisure` or `household`):
+#' Intervention Parameters (populated by `set_intervention_ach()`; users do not normally set these directly. One block per scope, where `<s>` is one of `joint`, `workplace`, `school`, `leisure` or `household`):
 #' * `intervention_<s>_active`: boolean flag set to TRUE when an intervention has been installed in scope <s>. Default = FALSE
 #' * `intervention_<s>_list`: list of intervention objects (each as returned by `make_intervention()`) deployed in scope <s>. Currently single-intervention only — list always has length 1 when active. Default = NULL
 #' * `intervention_<s>_coverage`: fraction of total setting size to cover (numeric in `[0, 1]`); inherited from the intervention object's `coverage` field. Default = NULL
 #' * `intervention_<s>_coverage_target`: what the coverage fraction applies to. Either "individuals" or "square_footage". Default = NULL
 #' * `intervention_<s>_coverage_type`: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of riskiness). Default = NULL
 #' * `intervention_<s>_timestep`: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
-#' * `intervention_<setting>_covered` (per-setting scopes only — workplace/school/leisure/household): 0/1 vector of length equal to the number of locations in the setting, populated by the dispatcher to mark which locations received the intervention. Default = NULL
 #'
 #' Setting-Specific Room Size Per Individual Parameters:
 #' * `size_per_individual_workplace`: The volume or surface area for each individual in the workplace setting type; default = 1 (in which case "square_footage" coverage_target gives same results as "individuals" coverage_target)
@@ -134,21 +123,14 @@ get_parameters <- function(overrides = list(), archetype = "none") {
   # Open a list of parameters to store
   parameters <- list(
     human_population = 10000,
-    initial_proportion_child = 0.2,
-    initial_proportion_adult = 0.6,
-    initial_proportion_elderly = 0.2,
     number_initial_S = 9995,
     number_initial_E = 5,
     number_initial_I = 0,
     number_initial_R = 0,
     seed = NULL,
-    mean_household_size = 3,
     workplace_prop_max = 0.1,
     workplace_a = 5.36,
     workplace_c = 1.34,
-    school_prop_max = 0.1,
-    school_meanlog = 5.49,
-    school_sdlog = 1.02,
     school_student_staff_ratio = 20,
     leisure_prob_visit = 0.6,
     leisure_mean_number_settings = 3,
@@ -168,9 +150,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     dt = 0.5, # check this as default
     simulation_time = 150,
     render_diagnostics = FALSE,
-    household_distribution_country = "USA",
-    school_distribution_country = "USA",
-    workplace_distribution_country = "USA",
     endemic_or_epidemic = "epidemic",
     duration_immune = NULL,
     prob_inf_external = NULL,
@@ -232,7 +211,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_workplace_coverage_target = NULL,
     intervention_workplace_coverage_type   = NULL,
     intervention_workplace_timestep        = NULL,
-    intervention_workplace_covered         = NULL,
 
     intervention_school_active             = FALSE,
     intervention_school_list               = NULL,
@@ -240,7 +218,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_school_coverage_target    = NULL,
     intervention_school_coverage_type      = NULL,
     intervention_school_timestep           = NULL,
-    intervention_school_covered            = NULL,
 
     intervention_leisure_active            = FALSE,
     intervention_leisure_list              = NULL,
@@ -248,7 +225,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_leisure_coverage_target   = NULL,
     intervention_leisure_coverage_type     = NULL,
     intervention_leisure_timestep          = NULL,
-    intervention_leisure_covered           = NULL,
 
     intervention_household_active          = FALSE,
     intervention_household_list            = NULL,
@@ -256,7 +232,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     intervention_household_coverage_target = NULL,
     intervention_household_coverage_type   = NULL,
     intervention_household_timestep        = NULL,
-    intervention_household_covered         = NULL,
 
     # Room Size Per Individual Parameters: (currently used for coverage allocation)
     size_per_individual_workplace = 1,
@@ -390,21 +365,6 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     stop(
       "prob_inf_external must be specified if endemic_or_epidemic is set to endemic"
     )
-  }
-
-  # Checking distribution country is either UK, USA or custom
-  if (!(parameters$household_distribution_country %in% c("UK", "USA", "custom"))) {
-    stop(
-      "household_distribution_country must be set to either UK, USA or custom"
-    )
-  }
-  if (!(parameters$workplace_distribution_country %in% c("UK", "USA", "custom"))) {
-    stop(
-      "workplace_distribution_country must be set to either UK, USA or custom"
-    )
-  }
-  if (!(parameters$school_distribution_country %in% c("UK", "USA", "custom"))) {
-    stop("school_distribution_country must be set to either UK, USA or custom")
   }
 
   # Check that all setting-specific betas are of the correct length and type:
