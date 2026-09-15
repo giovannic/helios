@@ -1,3 +1,44 @@
+#' Generate the intervention data for a population
+#'
+#' @description
+#' Determines which locations have an intervention deployed, and the resulting
+#' per-location efficacy for each setting with an active intervention. This is
+#' kept separate from [generate_population_data()] so that the same population
+#' can be reused with different interventions.
+#'
+#' @inheritParams generate_intervention_switches
+#'
+#' @return A list with two elements:
+#'   \describe{
+#'     \item{switches}{The coverage switches, as returned by
+#'       [generate_intervention_switches()].}
+#'     \item{efficacy}{A named list containing, for each setting with an active
+#'       intervention, the per-location efficacy as returned by
+#'       [calculate_efficacy_from_ach()].}
+#'   }
+#'
+#' @family intervention
+#' @export
+generate_intervention_data <- function(parameters_list, population_data) {
+  switches <- generate_intervention_switches(parameters_list, population_data)
+
+  # The coverage vector is used inside calculate_efficacy_from_ach to zero out
+  # delta for uncovered locations.
+  efficacy <- list()
+  for (setting in c("workplace", "school", "leisure", "household")) {
+    if (isTRUE(parameters_list[[paste0("intervention_", setting, "_active")]])) {
+      efficacy[[setting]] <- calculate_efficacy_from_ach(
+        ach_values = population_data[[paste0(setting, "_specific_ach")]],
+        parameters_list = parameters_list,
+        setting = setting,
+        coverage_vector = switches[[setting]]
+      )
+    }
+  }
+
+  list(switches = switches, efficacy = efficacy)
+}
+
 #' Generate intervention coverage switches
 #'
 #' @description
@@ -28,7 +69,7 @@ generate_intervention_switches <- function(parameters_list, population_data) {
       population_data
     )
   } else {
-    intervention_switches <- strict_list(.name = "intervention_switches")
+    intervention_switches <- list()
     for (setting in setting_types) {
       if (isTRUE(parameters_list[[paste0("intervention_", setting, "_active")]])) {
         intervention_switches[[setting]] <- generate_setting_intervention_switches(
@@ -130,8 +171,7 @@ generate_joint_intervention_switches <- function(parameters_list, population_dat
     names(setting_size_list),
     lengths(setting_size_list)
   )
-  return(strict_list(
-    .name = "intervention_switches",
+  return(list(
     workplace = intervention_switches[setting_name_index == "workplace"],
     school = intervention_switches[setting_name_index == "school"],
     leisure = intervention_switches[setting_name_index == "leisure"]
@@ -277,7 +317,7 @@ make_intervention <- function(name,
 #' Stores a single intervention object (as produced by [make_intervention()])
 #' into the parameters list under the chosen `setting`. The intervention is
 #' not yet allocated to specific locations — that happens later via
-#' [generate_intervention_switches()] when [generate_population_data()] runs.
+#' [generate_intervention_data()] when [run_simulation()] runs.
 #'
 #' Setting "joint" pools workplace + school + leisure into a single coverage
 #' budget; household is intentionally excluded from joint deployment. The
@@ -401,7 +441,7 @@ set_intervention_ach <- function(parameters_list,
 #' object's `delta_function` (and `delta_params`, `variation_function`,
 #' `variation_params`); see [make_intervention()].
 #'
-#' Called once per setting from [generate_population_data()].
+#' Called once per setting from [generate_intervention_data()].
 #'
 #' @param ach_values Numeric vector of baseline ACH values per location in
 #' the setting.

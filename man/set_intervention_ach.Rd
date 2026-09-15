@@ -44,7 +44,7 @@ workplace, school and leisure slots, whose \verb{_active} flags are switched on.
 Stores a single intervention object (as produced by \code{\link[=make_intervention]{make_intervention()}})
 into the parameters list under the chosen \code{setting}. The intervention is
 not yet allocated to specific locations — that happens later via
-\code{\link[=generate_intervention_switches]{generate_intervention_switches()}} when \code{\link[=generate_population_data]{generate_population_data()}} runs.
+\code{\link[=generate_intervention_data]{generate_intervention_data()}} when \code{\link[=run_simulation]{run_simulation()}} runs.
 
 Setting "joint" pools workplace + school + leisure into a single coverage
 budget; household is intentionally excluded from joint deployment. The
@@ -60,6 +60,7 @@ Other intervention:
 \code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
 \code{\link{efficacy_to_delta}()},
+\code{\link{generate_intervention_data}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},

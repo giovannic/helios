@@ -12,6 +12,6 @@ generate_population_data(parameters_list)
 \description{
 This will sample individuals' initial state and assign them to households and
 other locations. It also draws the baseline ACH and riskiness of each
-location and, when interventions are enabled, determines which locations are
-covered and the resulting per-location efficacy.
+location. Interventions are not part of the population: see
+\code{\link[=generate_intervention_data]{generate_intervention_data()}}.
 }

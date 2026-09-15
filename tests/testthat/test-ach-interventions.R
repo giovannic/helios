@@ -502,13 +502,14 @@ test_that("generate_intervention_switches() with coverage_target as individuals 
   )
 
   population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
   expect_vector(
-    population_data$household_specific_efficacy,
+    intervention_data$efficacy$household,
     ptype = double(),
     size = length(population_data$household_specific_ach)
   )
-  expect_true(any(population_data$household_specific_efficacy > 0))
+  expect_true(any(intervention_data$efficacy$household > 0))
 })
 
 test_that("generate_intervention_switches() with coverage_target as square_footage and coverage_type as targeted_riskiness allocates the expected total coverage for workplaces", {
@@ -521,8 +522,9 @@ test_that("generate_intervention_switches() with coverage_target as square_foota
   )
 
   population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
-  covered <- population_data$intervention_switches$workplace
+  covered <- intervention_data$switches$workplace
   expect_true(all(covered %in% c(0, 1)))
   expect_true(any(covered == 1))
 
@@ -584,15 +586,16 @@ test_that("generate_joint_intervention_switches() pools workplace, school, and l
   )
 
   population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
   # Household is excluded from joint deployment, so it should have no
   # installed intervention and zero efficacy:
   expect_false(parameters_list$intervention_household_active)
-  expect_false("household_specific_efficacy" %in% names(population_data))
+  expect_false("household" %in% names(intervention_data$efficacy))
 
   # Workplace, school, and leisure should each have some covered locations:
   for (setting in c("workplace", "school", "leisure")) {
-    covered <- population_data$intervention_switches[[setting]]
+    covered <- intervention_data$switches[[setting]]
     expect_true(any(covered == 1))
   }
 })
@@ -623,8 +626,9 @@ test_that("an installed intervention with full coverage reduces every location's
   )
 
   population_data <- generate_population_data(parameters_list)
+  intervention_data <- generate_intervention_data(parameters_list, population_data)
 
-  efficacy <- population_data$workplace_specific_efficacy
+  efficacy <- intervention_data$efficacy$workplace
   # coverage = 1 with coverage_target = "individuals" allocates until the
   # full headcount budget is met, which can occasionally leave a
   # zero-occupancy location's covered switch at 0 -- so check on average

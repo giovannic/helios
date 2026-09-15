@@ -46,12 +46,13 @@ The intervention's delta per location is determined by the intervention
 object's \code{delta_function} (and \code{delta_params}, \code{variation_function},
 \code{variation_params}); see \code{\link[=make_intervention]{make_intervention()}}.
 
-Called once per setting from \code{\link[=generate_population_data]{generate_population_data()}}.
+Called once per setting from \code{\link[=generate_intervention_data]{generate_intervention_data()}}.
 }
 \seealso{
 Other intervention: 
 \code{\link{ach_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
+\code{\link{generate_intervention_data}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},
