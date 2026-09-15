@@ -12,7 +12,10 @@ run_simulation(parameters_list, state = NULL)
 \item{state}{Optional simulation state from a previous run, as returned in the
 \code{state} element of the output list. When provided, the simulation resumes from
 this state. \code{simulation_time} controls the number of \emph{additional} timesteps to
-run (not the absolute end time). Default is \code{NULL} (start fresh).}
+run (not the absolute end time). With time-varying transmission, beta
+vectors are indexed by day from the start of the original run, so they must
+have a value for every day up to the end of the resumed run. Default is
+\code{NULL} (start fresh).}
 }
 \value{
 A list with two elements:

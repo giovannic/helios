@@ -132,3 +132,18 @@ generate_betas <- function(
   # Return the data frame of betas:
   return(betas)
 }
+
+#' seed_rng
+#'
+#' @description
+#' Seeds both random number generators used by helios: base R's (via
+#' `set.seed()`) and dqrng's (via `dqrng::dqset.seed()`). dqrng is seeded with
+#' a draw from base R's generator, so a single seed determines both. A `NULL`
+#' seed seeds both randomly.
+#'
+#' @param seed A single integer seed, or `NULL`
+#' @noRd
+seed_rng <- function(seed) {
+  set.seed(seed)
+  dqrng::dqset.seed(ceiling(stats::runif(1) * .Machine$integer.max))
+}
