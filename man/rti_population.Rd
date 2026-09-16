@@ -4,7 +4,13 @@
 \alias{rti_population}
 \title{Synthetic population for a US county or state from RTI International}
 \usage{
-rti_population(fips, version = "2010_ver1", refresh = FALSE)
+rti_population(
+  fips,
+  version = "2010_ver1",
+  catch_all_schools = "synthetic",
+  synthetic_school_size = 141,
+  refresh = FALSE
+)
 }
 \arguments{
 \item{fips}{A FIPS code as a character string: 2 digits for a state (e.g.
@@ -14,6 +20,16 @@ Francisco). Numbers are not accepted, because they lose leading zeros.}
 \item{version}{The synthetic population release. Only \code{"2010_ver1"} is
 available.}
 
+\item{catch_all_schools}{What to do with students in placeholder schools with
+no location: \code{"synthetic"} or \code{"nearest"}. See Details.}
+
+\item{synthetic_school_size}{The number of students in each new private
+school when \code{catch_all_schools = "synthetic"}. The default, 141, is the mean
+size of US private schools in 2009–10: 4,700,119 students in 33,366 schools
+(Table 1 of Broughman, Swaim and Hryczaniuk (2011), \emph{Characteristics of
+Private Schools in the United States: Results From the 2009–10 Private School
+Universe Survey}, NCES 2011-339).}
+
 \item{refresh}{If \code{TRUE}, download the data again even if it is cached.}
 }
 \value{
@@ -21,24 +37,24 @@ A \code{helios_synthetic_population}: a list with
 \itemize{
 \item \code{people}: a data frame with one row per person and integer columns
 \code{household_id}, \code{age}, \code{school_id} and \code{workplace_id} (\code{NA} means none).
-\item \code{schools}: a data frame with columns \code{school_id} and \code{reference_size},
-the school's number of students across the whole US synthetic population.
-\item \code{workplaces}: a data frame with columns \code{workplace_id} and
-\code{reference_size}, the workplace's number of workers across the whole US
-synthetic population.
-\item \code{metadata}: a list with \code{source}, \code{version}, \code{fips}, \code{n_people} and
-\code{n_households}.
+\item \code{schools}: a data frame with column \code{school_id}, one row per school. The
+new schools made for \code{catch_all_schools = "synthetic"} come last.
+\item \code{workplaces}: a data frame with column \code{workplace_id}, one row per
+workplace.
+\item \code{metadata}: a list with \code{source}, \code{version}, \code{fips},
+\code{catch_all_schools}, \code{synthetic_school_size} (\code{NA} unless
+\code{catch_all_schools = "synthetic"}), \code{n_people} and \code{n_households}.
 }
 
 A county extract lists only the county's residents, so a school or
-workplace that also has members from elsewhere has fewer people in
-\code{people} than its \code{reference_size}.
+workplace that also has members who live elsewhere has fewer people in
+\code{people} than in reality. A state extract has fewer such settings.
 }
 \description{
 Downloads the RTI International U.S. Synthetic Population for a county or
-state, reduces it to the people, schools and workplaces helios needs, and
-caches the result. Later calls for the same \code{fips} and \code{version} read the
-cache and need no network access.
+state, caches the parts helios needs, and reduces them to the people, schools
+and workplaces of each person. Later calls for the same \code{fips} and \code{version}
+read the cache and need no network access.
 }
 \details{
 The data come from
@@ -48,18 +64,46 @@ a large state over 1 GB.
 
 Group quarters (such as care homes, prisons and dormitories) are not
 included.
+
+Some students in the RTI data are assigned to placeholder schools that have no
+location and totals such as 1,985,724, rather than to a real school. Every one
+of them attends a private school according to the census. Between about 5\% and
+20\% of students are in these schools, depending on the location. The
+placeholder schools are always removed, and \code{catch_all_schools} sets what
+happens to their students:
+\itemize{
+\item \code{"synthetic"} (the default) puts them in new private schools of
+\code{synthetic_school_size} students. Households are taken in order of census
+block group, so neighbours share a school, and each household's students stay
+together. A new school takes households until it has at least
+\code{synthetic_school_size} students, so it can be slightly larger, and the last
+one is smaller.
+\item \code{"nearest"} moves each student to the nearest private school, with a
+location, that teaches their grade (preschool, kindergarten or grades 1 to
+12), even if it is full. This is the fallback RTI describes in the "School
+Assignments" section of the
+\href{https://github.com/RTIInternational/SyntheticPopulations/blob/main/README.md#school-assignments}{data's documentation}.
+Private schools can end up several times their real size.
+}
+
+The cache doesn't depend on \code{catch_all_schools} or \code{synthetic_school_size}, so
+changing them doesn't download the data again.
 }
 \examples{
 \dontrun{
 san_francisco <- rti_population("06075")
+san_francisco_nearest <- rti_population("06075", catch_all_schools = "nearest")
 }
 }
 \seealso{
-\code{\link[=rti_cache_dir]{rti_cache_dir()}} for where the data are cached.
+\code{\link[=rti_cache_dir]{rti_cache_dir()}} for where the data are cached, and
+\code{\link[=read_synthetic_population]{read_synthetic_population()}} to read data you already have.
 
 Other data: 
 \code{\link{baseline_household_demographics_usa}},
+\code{\link{read_synthetic_population}()},
 \code{\link{rti_cache_dir}()},
-\code{\link{schools_usa}}
+\code{\link{schools_usa}},
+\code{\link{validate_synthetic_population}()}
 }
 \concept{data}
