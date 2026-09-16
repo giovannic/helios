@@ -19,9 +19,11 @@ A data frame with 777,864 rows and 3 columns.
 }
 \seealso{
 Other data: 
+\code{\link{read_synthetic_population}()},
 \code{\link{rti_cache_dir}()},
 \code{\link{rti_population}()},
-\code{\link{schools_usa}}
+\code{\link{schools_usa}},
+\code{\link{validate_synthetic_population}()}
 }
 \concept{data}
 \keyword{datasets}
