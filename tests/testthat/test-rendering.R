@@ -75,7 +75,7 @@ test_that("run_simulations() correctly renders diagnostic outputs when render_di
 })
 
 test_that("Disease state counts sum to parameters$human population", {
-  # Get a list of model parameters (initial states must sum to human_population):
+  # Get a list of model parameters:
   parameters <- get_parameters(
     overrides = list(human_population = 137, number_initial_S = 132, simulation_time = 10)
   )
