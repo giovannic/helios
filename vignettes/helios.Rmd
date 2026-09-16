@@ -50,14 +50,6 @@ parameters_list <- get_parameters(list(human_population = 50000,
                                        seed = 1))
 ```
 
-Every setting also needs an air changes per hour (ACH) value. Here we use a uniform baseline of 4 ACH in each setting:
-
-```{r}
-for (setting in c("household", "workplace", "school", "leisure")) {
-  parameters_list <- set_default_ach(parameters_list, setting = setting, ach = 4)
-}
-```
-
 The names of all parameters are as follows:
 
 ```{r}

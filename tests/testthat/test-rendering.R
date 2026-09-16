@@ -3,7 +3,7 @@ test_that("run_simulations() correctly fails to render diagnostic outputs when r
   set.seed(seed = 12345)
 
   # Open a parameters list with render_diagnostics switched on:
-  parameters <- with_default_ach(get_parameters(overrides = list(simulation_time = 10)))
+  parameters <- get_parameters(overrides = list(simulation_time = 10))
 
   # Run the simulation:
   output <- run_simulation(parameters_list = parameters)$result
@@ -37,9 +37,9 @@ test_that("run_simulations() correctly renders diagnostic outputs when render_di
   set.seed(seed = 12345)
 
   # Open a parameters list with render_diagnostics switched on:
-  parameters <- with_default_ach(get_parameters(
+  parameters <- get_parameters(
     overrides = list(simulation_time = 5, render_diagnostics = TRUE)
-  ))
+  )
 
   # Run the simulation:
   output <- run_simulation(parameters_list = parameters)$result
@@ -76,9 +76,9 @@ test_that("run_simulations() correctly renders diagnostic outputs when render_di
 
 test_that("Disease state counts sum to parameters$human population", {
   # Get a list of model parameters (initial states must sum to human_population):
-  parameters <- with_default_ach(get_parameters(
+  parameters <- get_parameters(
     overrides = list(human_population = 137, number_initial_S = 132, simulation_time = 10)
-  ))
+  )
 
   # Run the simulation:
   output <- run_simulation(parameters_list = parameters)$result
@@ -97,7 +97,7 @@ test_that("Disease state counts sum to parameters$human population", {
 
 test_that("Renderer renders the number of externally sourced infections when endemic switched on", {
   # Generate the model variables:
-  parameters_list <- with_default_ach(get_parameters(
+  parameters_list <- get_parameters(
     overrides = list(
       human_population = 1000,
       number_initial_S = 995,
@@ -106,7 +106,7 @@ test_that("Renderer renders the number of externally sourced infections when end
       prob_inf_external = 0.05,
       simulation_time = 10
     )
-  ))
+  )
 
   # Run the simulation:
   simulation_render_test <- run_simulation(parameters_list = parameters_list)$result
@@ -117,9 +117,9 @@ test_that("Renderer renders the number of externally sourced infections when end
 
 test_that("Renderer does not render the number of externally sourced infections when endemic switched off", {
   # Generate the model variables:
-  parameters_list <- with_default_ach(get_parameters(
+  parameters_list <- get_parameters(
     overrides = list(human_population = 1000, number_initial_S = 995, simulation_time = 10)
-  ))
+  )
 
   # Run the simulation:
   simulation_render_test <- run_simulation(parameters_list = parameters_list)$result
