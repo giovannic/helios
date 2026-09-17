@@ -26,3 +26,10 @@ small_population_parameters <- function(overrides = list()) {
   parameters[names(overrides)] <- overrides
   with_default_ach(get_parameters(parameters))
 }
+
+# Checks that `a` and `b` label the same groups, possibly with different ids
+expect_same_grouping <- function(a, b) {
+  pairs <- unique(data.frame(a, b))
+  expect_false(anyDuplicated(pairs$a) > 0)
+  expect_false(anyDuplicated(pairs$b) > 0)
+}

@@ -21,6 +21,7 @@ Other variables:
 \code{\link{generate_initial_leisure}()},
 \code{\link{generate_initial_schools}()},
 \code{\link{generate_initial_workplaces}()},
-\code{\link{generate_population_data}()}
+\code{\link{generate_population_data}()},
+\code{\link{generate_rti_schools_and_workplaces}()}
 }
 \concept{variables}

@@ -17,6 +17,11 @@
 #' * `workplace_a`: the a parameter for the Zipf-like distribution on workplace size
 #' * `workplace_c`: the c parameter for the Zipf-like distribution on workplace size
 #' * `school_student_staff_ratio`: the number of students to each adult staff member
+#' * `school_workplace_sampling`: how individuals are assigned to schools and
+#'   workplaces by [generate_population_data()]. `"reference"` (default) samples
+#'   school sizes from [`schools_usa`] and workplace sizes from a power-law
+#'   distribution. `"rti"` keeps the schools and workplaces of the synthetic
+#'   population that households are sampled from, and needs one to be given.
 #' * `leisure_mean_number_settings`: TBD
 #' * `leisure_mean_size`: TBD
 #' * `leisure_overdispersion_size`: TBD
@@ -132,6 +137,7 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     workplace_a = 5.36,
     workplace_c = 1.34,
     school_student_staff_ratio = 20,
+    school_workplace_sampling = "reference",
     leisure_prob_visit = 0.6,
     leisure_mean_number_settings = 3,
     leisure_mean_size = 50,
@@ -334,6 +340,14 @@ get_parameters <- function(overrides = list(), archetype = "none") {
   # Ensure archetype input from recognised options:
   if (!(archetype %in% c("none", "flu", "measles", "sars_cov_2"))) {
     stop('archetype not recognised')
+  }
+
+  if (
+    !is.character(parameters$school_workplace_sampling) ||
+      length(parameters$school_workplace_sampling) != 1 ||
+      !(parameters$school_workplace_sampling %in% c("reference", "rti"))
+  ) {
+    stop('school_workplace_sampling must be either "reference" or "rti"')
   }
 
   # Check if dt is < 1 and whether it can evenly divide 1 (i.e. 1/x should return an integer)
