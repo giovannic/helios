@@ -490,6 +490,21 @@ test_that("read_csv_columns() reads tab-separated files and text columns", {
   expect_equal(read_csv_columns(tsv, c("serialno", "school_id"), character = "serialno", use_fread = TRUE), expected)
 })
 
+test_that("a population can be generated from a downloaded extract in both sampling modes", {
+  local_cache_dir()
+  local_rti_mock()
+  synthetic <- rti_population("06075")
+
+  for (sampling in c("reference", "rti")) {
+    parameters <- small_population_parameters(list(school_workplace_sampling = sampling))
+    population_data <- generate_population_data(parameters, synthetic)
+    expect_length(population_data$initial_household_settings, parameters$human_population)
+    expect_equal(sum(population_data$setting_sizes$household), parameters$human_population)
+  }
+  # In "rti" mode, there is one school for each school in the extract
+  expect_length(population_data$setting_sizes$school, sum(!is.na(unique(synthetic$people$school_id))))
+})
+
 test_that("rti_population() downloads a real county", {
   # Check the opt-in first: skip_if_offline() itself uses the network
   skip_if(Sys.getenv("HELIOS_TEST_RTI_DOWNLOAD") != "true", "Set HELIOS_TEST_RTI_DOWNLOAD=true to run")

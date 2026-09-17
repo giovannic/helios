@@ -234,3 +234,15 @@ test_that("run_simulation() works when a parameter archetype specified", {
   ))
   expect_true(object = is.data.frame(simulation_example))
 })
+
+test_that("school_workplace_sampling defaults to reference and accepts rti", {
+  expect_equal(get_parameters()$school_workplace_sampling, "reference")
+  expect_equal(get_parameters(list(school_workplace_sampling = "rti"))$school_workplace_sampling, "rti")
+})
+
+test_that("get_parameters() rejects an unknown school_workplace_sampling", {
+  message <- 'school_workplace_sampling must be either "reference" or "rti"'
+  expect_error(get_parameters(list(school_workplace_sampling = "nces")), message)
+  expect_error(get_parameters(list(school_workplace_sampling = c("reference", "rti"))), message)
+  expect_error(get_parameters(list(school_workplace_sampling = NULL)), message)
+})
