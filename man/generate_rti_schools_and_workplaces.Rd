@@ -7,7 +7,6 @@
 generate_rti_schools_and_workplaces(
   parameters_list,
   synthetic_population,
-  person_rows,
   initial_age_classes
 )
 }
@@ -17,11 +16,8 @@ generate_rti_schools_and_workplaces(
 \item{synthetic_population}{A \code{helios_synthetic_population} whose \code{people}
 have \code{school_id} and \code{workplace_id} columns.}
 
-\item{person_rows}{An integer vector giving the row of
-\code{synthetic_population$people} each individual was sampled from, as returned
-by \code{\link[=generate_initial_households]{generate_initial_households()}}.}
-
-\item{initial_age_classes}{A character vector assigning an age class to each individual}
+\item{initial_age_classes}{A character vector assigning an age class to each
+person in \code{synthetic_population$people}}
 }
 \value{
 A list with integer vectors \code{school_settings} and
@@ -29,9 +25,8 @@ A list with integer vectors \code{school_settings} and
 }
 \description{
 Used by \code{\link[=generate_population_data]{generate_population_data()}} when \code{school_workplace_sampling} is
-\code{"rti"}. Each individual keeps the school and workplace of the person they
-were sampled from. Households sampled more than once therefore share their
-schools and workplaces.
+\code{"rti"}. There is one individual for each person in the synthetic
+population, in the same order, who keeps their school and workplace.
 }
 \details{
 The synthetic population has no school staff, so each school gets

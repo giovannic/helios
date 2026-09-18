@@ -147,4 +147,8 @@ This function creates a named list of model parameters which are to be used
 in the model. For example, the output of \code{\link[=get_parameters]{get_parameters()}} provides input to
 functions such as \code{\link[=create_variables]{create_variables()}} and \code{\link[=create_events]{create_events()}}.
 }
+\seealso{
+Other parameters: 
+\code{\link{set_synthetic_population_size}()}
+}
 \concept{parameters}

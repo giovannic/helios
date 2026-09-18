@@ -22,18 +22,21 @@ location. Interventions are not part of the population: see
 \code{\link[=generate_intervention_data]{generate_intervention_data()}}.
 }
 \details{
-Households are sampled with replacement from \code{synthetic_population} when
-given, and from the bundled San Francisco households
-(\code{\link{baseline_household_demographics_usa}}) otherwise. Schools and workplaces
-depend on the \code{school_workplace_sampling} parameter:
+Households and schools and workplaces depend on the
+\code{school_workplace_sampling} parameter:
 \itemize{
-\item \code{"reference"}: school sizes are sampled from \code{\link{schools_usa}} and workplace
-sizes from a power-law distribution. Every child goes to school and every
-other adult to work.
-\item \code{"rti"}: individuals keep the school and workplace of the person they were
-sampled from, and school staff are drawn from working adults. This needs a
-\code{synthetic_population} with \code{school_id} and \code{workplace_id} columns. See
-\code{\link[=generate_rti_schools_and_workplaces]{generate_rti_schools_and_workplaces()}}.
+\item \code{"reference"}: households are sampled with replacement from
+\code{synthetic_population} when given, and from the bundled San Francisco
+households (\code{\link{baseline_household_demographics_usa}}) otherwise. School
+sizes are sampled from \code{\link{schools_usa}} and workplace sizes from a power-law
+distribution. Every child goes to school and every other adult to work.
+\item \code{"rti"}: the population is the whole of \code{synthetic_population}, with each
+person simulated once in their own household, school and workplace. School
+staff are drawn from working adults. This needs a \code{synthetic_population}
+with \code{school_id} and \code{workplace_id} columns, and \code{human_population} must be
+its number of people: see \code{\link[=set_synthetic_population_size]{set_synthetic_population_size()}}. The
+population can't be scaled down, because settings would be left with too
+few members. See \code{\link[=generate_rti_schools_and_workplaces]{generate_rti_schools_and_workplaces()}}.
 }
 }
 \seealso{

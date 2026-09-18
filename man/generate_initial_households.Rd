@@ -15,9 +15,7 @@ households from.}
 }
 \value{
 A list with \code{individual_households} and \code{age_class_vector}, giving
-each individual's household and age class. When \code{synthetic_population} is
-given, it also has \code{person_rows}, giving the row of
-\code{synthetic_population$people} each individual was sampled from.
+each individual's household and age class.
 }
 \description{
 Households are sampled with replacement from a reference dataset. This is
