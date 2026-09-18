@@ -27,6 +27,12 @@ small_population_parameters <- function(overrides = list()) {
   with_default_ach(get_parameters(parameters))
 }
 
+# Parameters for simulating the whole of `synthetic_population` in "rti" mode
+rti_population_parameters <- function(synthetic_population, overrides = list()) {
+  parameters <- small_population_parameters(c(list(school_workplace_sampling = "rti"), overrides))
+  set_synthetic_population_size(parameters, synthetic_population)
+}
+
 # Checks that `a` and `b` label the same groups, possibly with different ids
 expect_same_grouping <- function(a, b) {
   pairs <- unique(data.frame(a, b))

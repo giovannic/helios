@@ -56,14 +56,12 @@ check_population_invariant <- function(parameters, synthetic_population = NULL) 
   invisible(population_data)
 }
 
-# Checks that each individual's school and workplace match the synthetic person they were sampled
-# from, apart from school staff, who move from their workplace to a school
+# Checks that each individual is the synthetic person in the same row, with the same household,
+# school and workplace, apart from school staff, who move from their workplace to a school
 check_rti_settings <- function(parameters, synthetic_population, population_data) {
-  # Repeat the sampling in generate_population_data() to find who each individual was sampled from
-  generate_initial_disease_states(parameters)
-  households <- generate_initial_households(parameters, synthetic_population)
-  expect_identical(households$individual_households, population_data$initial_household_settings)
-  rti <- synthetic_population$people[households$person_rows, ]
+  rti <- synthetic_population$people
+  expect_identical(population_data$initial_household_settings, rti$household_id)
+  expect_identical(population_data$age_classes, age_class_from_age(rti$age))
 
   school <- population_data$initial_school_settings
   workplace <- population_data$initial_workplace_settings
@@ -96,7 +94,7 @@ test_that("population data invariants with households from a synthetic populatio
 
 test_that("population data invariants with schools and workplaces from a synthetic population", {
   population <- make_synthetic_population()
-  parameters <- small_population_parameters(list(school_workplace_sampling = "rti"))
+  parameters <- rti_population_parameters(population)
   population_data <- check_population_invariant(parameters, population)
 
   # People with both a school and a workplace, and elderly workers, are kept
@@ -109,7 +107,9 @@ test_that("rti sampling needs a synthetic population with school and workplace c
   expect_error(generate_population_data(parameters), "needs a synthetic population, eg.*rti_population")
   expect_error(run_simulation(parameters), "needs a synthetic population")
 
-  people <- make_synthetic_population()$people
+  population <- make_synthetic_population()
+  people <- population$people
+  parameters <- rti_population_parameters(population)
   without_workplaces <- read_synthetic_population(people[c("household_id", "age", "school_id")])
   expect_error(generate_population_data(parameters, without_workplaces), "needs a workplace_id column")
   without_schools <- read_synthetic_population(people[c("household_id", "age", "workplace_id")])
@@ -118,6 +118,17 @@ test_that("rti sampling needs a synthetic population with school and workplace c
   # Household-only data can still be used with reference sampling
   households_only <- read_synthetic_population(people[c("household_id", "age")])
   expect_no_error(generate_population_data(small_population_parameters(), households_only))
+})
+
+test_that("rti sampling simulates the whole synthetic population", {
+  population <- make_synthetic_population()
+  parameters <- small_population_parameters(list(school_workplace_sampling = "rti"))
+  expect_error(
+    generate_population_data(parameters, population),
+    "human_population must be 520, not 500.*set_synthetic_population_size"
+  )
+  parameters <- rti_population_parameters(population)
+  expect_length(generate_population_data(parameters, population)$initial_household_settings, 520)
 })
 
 test_that("generate_population_data() validates the synthetic population", {
@@ -133,7 +144,7 @@ sampling_modes <- list(
     synthetic_population = NULL
   ),
   rti = list(
-    parameters = small_population_parameters(list(simulation_time = 10, school_workplace_sampling = "rti")),
+    parameters = rti_population_parameters(make_synthetic_population(), list(simulation_time = 10)),
     synthetic_population = make_synthetic_population()
   )
 )

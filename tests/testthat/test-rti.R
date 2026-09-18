@@ -497,6 +497,9 @@ test_that("a population can be generated from a downloaded extract in both sampl
 
   for (sampling in c("reference", "rti")) {
     parameters <- small_population_parameters(list(school_workplace_sampling = sampling))
+    if (sampling == "rti") {
+      parameters <- set_synthetic_population_size(parameters, synthetic)
+    }
     population_data <- generate_population_data(parameters, synthetic)
     expect_length(population_data$initial_household_settings, parameters$human_population)
     expect_equal(sum(population_data$setting_sizes$household), parameters$human_population)
