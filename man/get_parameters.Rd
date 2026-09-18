@@ -20,6 +20,11 @@ These parameters are:
 \item \code{workplace_a}: the a parameter for the Zipf-like distribution on workplace size
 \item \code{workplace_c}: the c parameter for the Zipf-like distribution on workplace size
 \item \code{school_student_staff_ratio}: the number of students to each adult staff member
+\item \code{school_workplace_sampling}: how individuals are assigned to schools and
+workplaces by \code{\link[=generate_population_data]{generate_population_data()}}. \code{"reference"} (default) samples
+school sizes from \code{\link{schools_usa}} and workplace sizes from a power-law
+distribution. \code{"rti"} keeps the schools and workplaces of the synthetic
+population that households are sampled from, and needs one to be given.
 \item \code{leisure_mean_number_settings}: TBD
 \item \code{leisure_mean_size}: TBD
 \item \code{leisure_overdispersion_size}: TBD
@@ -141,5 +146,9 @@ Hospitalizations and Deaths
 This function creates a named list of model parameters which are to be used
 in the model. For example, the output of \code{\link[=get_parameters]{get_parameters()}} provides input to
 functions such as \code{\link[=create_variables]{create_variables()}} and \code{\link[=create_events]{create_events()}}.
+}
+\seealso{
+Other parameters: 
+\code{\link{set_synthetic_population_size}()}
 }
 \concept{parameters}

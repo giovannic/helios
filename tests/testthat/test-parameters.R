@@ -234,3 +234,36 @@ test_that("run_simulation() works when a parameter archetype specified", {
   ))
   expect_true(object = is.data.frame(simulation_example))
 })
+
+test_that("school_workplace_sampling defaults to reference and accepts rti", {
+  expect_equal(get_parameters()$school_workplace_sampling, "reference")
+  expect_equal(get_parameters(list(school_workplace_sampling = "rti"))$school_workplace_sampling, "rti")
+})
+
+test_that("get_parameters() rejects an unknown school_workplace_sampling", {
+  message <- 'school_workplace_sampling must be either "reference" or "rti"'
+  expect_error(get_parameters(list(school_workplace_sampling = "nces")), message)
+  expect_error(get_parameters(list(school_workplace_sampling = c("reference", "rti"))), message)
+  expect_error(get_parameters(list(school_workplace_sampling = NULL)), message)
+})
+
+test_that("set_synthetic_population_size() sets the population to the synthetic population's size", {
+  population <- make_synthetic_population()
+  parameters <- get_parameters(list(
+    number_initial_S = 9990, number_initial_E = 5, number_initial_I = 3, number_initial_R = 2
+  ))
+  parameters <- set_synthetic_population_size(parameters, population)
+  expect_equal(parameters$human_population, 520)
+  expect_equal(parameters$number_initial_S, 510)
+  expect_equal(parameters[c("number_initial_E", "number_initial_I", "number_initial_R")], list(
+    number_initial_E = 5, number_initial_I = 3, number_initial_R = 2
+  ))
+})
+
+test_that("set_synthetic_population_size() errors when too many people are initially infected", {
+  population <- read_synthetic_population(data.frame(household_id = c(1, 1, 2), age = c(40, 10, 70)))
+  expect_error(
+    set_synthetic_population_size(get_parameters(list(number_initial_S = 9996, number_initial_E = 4)), population),
+    "has 3 people, fewer than the 4"
+  )
+})

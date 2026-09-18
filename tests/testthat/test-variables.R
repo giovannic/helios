@@ -340,3 +340,155 @@ test_that("generate_initial_workplaces errors if parameter_list does not contain
 #=======================================#
 #===== generate_initial_households =====#
 #=======================================#
+
+# A synthetic population with the given household sizes, skipping validation
+synthetic_population_with_households <- function(sizes) {
+  structure(
+    list(people = data.frame(household_id = rep(seq_along(sizes), sizes), age = rep(30L, sum(sizes)))),
+    class = "helios_synthetic_population"
+  )
+}
+
+test_that("generate_initial_households gives exactly human_population individuals", {
+  for (human_population in c(1, 7, 500)) {
+    parameters_list <- get_parameters(list(
+      human_population = human_population, number_initial_S = human_population,
+      number_initial_E = 0, seed = 1
+    ))
+    set.seed(1)
+    bundled <- generate_initial_households(parameters_list)
+    synthetic <- generate_initial_households(parameters_list, make_synthetic_population())
+
+    for (households in list(bundled, synthetic)) {
+      expect_length(households$individual_households, human_population)
+      expect_length(households$age_class_vector, human_population)
+      expect_setequal(households$individual_households, seq_len(max(households$individual_households)))
+    }
+  }
+})
+
+test_that("generate_initial_households terminates with households of one, or a single household", {
+  parameters_list <- get_parameters(list(human_population = 50, number_initial_S = 50, number_initial_E = 0))
+
+  households <- generate_initial_households(parameters_list, synthetic_population_with_households(rep(1, 3)))
+  expect_setequal(households$individual_households, 1:50)
+
+  households <- generate_initial_households(parameters_list, synthetic_population_with_households(4))
+  expect_equal(max(households$individual_households), 13)
+  expect_equal(tabulate(households$individual_households), c(rep(4, 12), 2))
+})
+
+test_that("generate_initial_households rejects an empty panel or a household with no members", {
+  parameters_list <- get_parameters()
+  expect_error(
+    generate_initial_households(parameters_list, synthetic_population_with_households(integer())),
+    "no households"
+  )
+  empty_household <- synthetic_population_with_households(c(2, 1))
+  empty_household$people$household_id <- c(1L, 1L, 3L)
+  expect_error(generate_initial_households(parameters_list, empty_household), "at least one member")
+})
+
+test_that("generate_initial_households keeps each sampled household together, with its members' ages", {
+  population <- make_synthetic_population()
+  parameters_list <- get_parameters(list(human_population = 1000, number_initial_S = 1000, number_initial_E = 0))
+  set.seed(1)
+  households <- generate_initial_households(parameters_list, population)
+
+  # Each helios household has the age classes of a synthetic household, apart from the last one
+  # sampled, which may be cut short
+  composition <- function(age_classes, household_ids) {
+    tapply(age_classes, household_ids, function(x) paste(sort(x), collapse = " "))
+  }
+  synthetic <- composition(age_class_from_age(population$people$age), population$people$household_id)
+  sampled <- composition(households$age_class_vector, households$individual_households)
+  expect_in(sampled[-length(sampled)], synthetic)
+})
+
+test_that("ages are grouped into the bundled panel's age classes", {
+  expect_equal(
+    age_class_from_age(c(0, 18, 19, 69, 70, 120)),
+    c("child", "child", "adult", "adult", "elderly", "elderly")
+  )
+})
+
+test_that("seeded reference populations are identical to those before synthetic populations were added", {
+  parameters_list <- with_default_ach(get_parameters(list(
+    human_population = 2000, number_initial_S = 1995, number_initial_E = 5, seed = 42
+  )))
+  expect_message(population_data <- generate_population_data(parameters_list))
+  expect_identical(population_data, readRDS(test_path("fixtures", "reference-population.rds")))
+})
+
+#==================================================#
+#===== generate_rti_schools_and_workplaces =====#
+#==================================================#
+
+# Schools and workplaces for everyone in `population`
+rti_settings <- function(population, ratio = 20) {
+  parameters_list <- get_parameters(list(school_student_staff_ratio = ratio, seed = 1))
+  age_classes <- age_class_from_age(population$people$age)
+  generate_rti_schools_and_workplaces(parameters_list, population, age_classes)
+}
+
+test_that("generate_rti_schools_and_workplaces keeps RTI ids, renumbered, with staff moved from work", {
+  population <- read_synthetic_population(data.frame(
+    household_id = c(1:8, 1, 4),
+    age = c(8, 9, 17, 40, 41, 42, 75, 30, 8, 40),
+    school_id = c(20, 20, 10, NA, NA, NA, NA, NA, 20, NA),
+    workplace_id = c(NA, NA, 30, 30, 50, 50, 50, NA, NA, 30)
+  ))
+  settings <- rti_settings(population, ratio = 2)
+  rti <- population$people
+
+  # School 20 (read as 1) has three students and school 10 (read as 2) one, so they need 2 and 1
+  # staff. They are drawn from the working adults without a school: rows 4, 5, 6 and 10.
+  staff <- which(settings$school_settings != 0 & is.na(rti$school_id))
+  expect_equal(tabulate(settings$school_settings[staff], 2), c(2, 1))
+  expect_in(staff, c(4:6, 10))
+  expect_equal(settings$workplace_settings[staff], c(0L, 0L, 0L))
+
+  # Everyone else keeps their ids: students, the 17-year-old with both, and the elderly worker
+  others <- setdiff(seq_len(nrow(rti)), staff)
+  expect_equal(settings$school_settings[others], renumber_settings(rti$school_id)[others])
+  expect_equal(settings$workplace_settings[others] == 0, is.na(rti$workplace_id[others]))
+  expect_same_grouping(settings$workplace_settings[others], rti$workplace_id[others])
+  expect_setequal(setdiff(settings$workplace_settings, 0), seq_len(max(settings$workplace_settings)))
+})
+
+test_that("staff counts follow school_student_staff_ratio and come from adults with a workplace", {
+  population <- make_synthetic_population()
+  settings <- rti_settings(population, ratio = 7)
+
+  rti <- population$people
+  students <- tabulate(renumber_settings(rti$school_id))
+  staff <- settings$school_settings != 0 & is.na(rti$school_id)
+  expect_equal(tabulate(settings$school_settings[staff], length(students)), ceiling(students / 7))
+  expect_true(all(age_class_from_age(rti$age[staff]) == "adult"))
+  expect_false(anyNA(rti$workplace_id[staff]))
+  expect_true(all(settings$workplace_settings[staff] == 0))
+  # No one else changes workplace
+  expect_equal(settings$workplace_settings[!staff] == 0, is.na(rti$workplace_id[!staff]))
+})
+
+test_that("workplaces left empty by staff moves are dropped", {
+  population <- read_synthetic_population(data.frame(
+    household_id = 1:3, age = c(10, 40, 30), school_id = c(1, NA, NA), workplace_id = c(NA, 7, 9)
+  ))
+  settings <- rti_settings(population)
+  staff <- which(settings$school_settings[2:3] != 0) + 1
+  expect_equal(settings$workplace_settings[staff], 0L)
+  expect_equal(settings$workplace_settings[-c(1, staff)], 1L)
+})
+
+test_that("generate_rti_schools_and_workplaces errors when there aren't enough staff", {
+  population <- read_synthetic_population(data.frame(
+    household_id = 1:4, age = c(10, 11, 40, 17), school_id = c(1, 2, NA, 2), workplace_id = c(NA, NA, NA, 3)
+  ))
+  expect_error(rti_settings(population), "schools need 2 staff, but only 0 adults have a workplace and no school")
+})
+
+test_that("generate_rti_schools_and_workplaces needs school and workplace columns", {
+  population <- read_synthetic_population(data.frame(household_id = 1:2, age = c(10, 40), school_id = c(1, NA)))
+  expect_error(rti_settings(population), "needs a workplace_id column")
+})

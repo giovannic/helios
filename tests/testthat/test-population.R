@@ -1,5 +1,5 @@
-check_population_invariant <- function(parameters) {
-  population_data <- generate_population_data(parameters)
+check_population_invariant <- function(parameters, synthetic_population = NULL) {
+  population_data <- generate_population_data(parameters, synthetic_population)
 
   expect_in(population_data$initial_disease_states, DISEASE_STATES)
   expect_length(population_data$initial_disease_states, parameters$human_population)
@@ -43,47 +43,153 @@ check_population_invariant <- function(parameters) {
   expect_equal(sum(population_data$setting_sizes$workplace), sum(population_data$initial_workplace_settings != 0))
   expect_equal(sum(population_data$setting_sizes$school), sum(population_data$initial_school_settings != 0))
 
-  # Total of workplace and school does adds up to the size of the non-elderly
-  # population though.
-  total_activity <- sum(population_data$setting_sizes$workplace) + sum(population_data$setting_sizes$school)
-  expect_equal(total_activity, sum(population_data$age_classes != "elderly"))
+  if (parameters$school_workplace_sampling == "reference") {
+    # Each non-elderly individual goes to exactly one of a school or a workplace. This doesn't
+    # hold in "rti" mode, where some adults don't work, some children and elderly do, and some
+    # children go to both.
+    total_activity <- sum(population_data$setting_sizes$workplace) + sum(population_data$setting_sizes$school)
+    expect_equal(total_activity, sum(population_data$age_classes != "elderly"))
+  } else {
+    check_rti_settings(parameters, synthetic_population, population_data)
+  }
+
+  invisible(population_data)
+}
+
+# Checks that each individual is the synthetic person in the same row, with the same household,
+# school and workplace, apart from school staff, who move from their workplace to a school
+check_rti_settings <- function(parameters, synthetic_population, population_data) {
+  rti <- synthetic_population$people
+  expect_identical(population_data$initial_household_settings, rti$household_id)
+  expect_identical(population_data$age_classes, age_class_from_age(rti$age))
+
+  school <- population_data$initial_school_settings
+  workplace <- population_data$initial_workplace_settings
+  staff <- is.na(rti$school_id) & school != 0
+
+  expect_equal(school[!staff] != 0, !is.na(rti$school_id[!staff]))
+  expect_equal(workplace[!staff] != 0, !is.na(rti$workplace_id[!staff]))
+  expect_same_grouping(school[!staff], rti$school_id[!staff])
+  expect_same_grouping(workplace[!staff], rti$workplace_id[!staff])
+
+  expect_true(all(population_data$age_classes[staff] == "adult"))
+  expect_false(anyNA(rti$workplace_id[staff]))
+  expect_true(all(workplace[staff] == 0))
+  students <- tabulate(school[!staff], length(population_data$setting_sizes$school))
+  expect_equal(
+    tabulate(school[staff], length(students)),
+    ceiling(students / parameters$school_student_staff_ratio)
+  )
 }
 
 test_that("population data invariants", {
   check_population_invariant(with_default_ach(get_parameters()))
 })
 
-test_that("run_simulation() gives the same result whether or not the population is provided", {
-  parameters <- with_default_ach(get_parameters(list(simulation_time = 10, seed = 1)))
-
-  expected <- run_simulation(parameters)$result
-  actual <- run_simulation(parameters, population_data = generate_population_data(parameters))$result
-
-  expect_identical(actual, expected)
+test_that("population data invariants with households from a synthetic population", {
+  population <- make_synthetic_population()
+  population_data <- check_population_invariant(small_population_parameters(), population)
+  expect_setequal(population_data$age_classes, AGE_CLASSES)
 })
 
-test_that("a population can be saved to a file and reused", {
-  parameters <- with_default_ach(get_parameters(list(simulation_time = 10, seed = 1)))
-  population_data <- generate_population_data(parameters)
+test_that("population data invariants with schools and workplaces from a synthetic population", {
+  population <- make_synthetic_population()
+  parameters <- rti_population_parameters(population)
+  population_data <- check_population_invariant(parameters, population)
 
-  path <- tempfile(fileext = ".rds")
-  on.exit(unlink(path))
-  saveRDS(population_data, path)
-  restored <- readRDS(path)
+  # People with both a school and a workplace, and elderly workers, are kept
+  expect_true(any(population_data$initial_school_settings != 0 & population_data$initial_workplace_settings != 0))
+  expect_true(any(population_data$age_classes == "elderly" & population_data$initial_workplace_settings != 0))
+})
 
-  expect_identical(restored, population_data)
-  expect_identical(
-    run_simulation(parameters, population_data = restored)$result,
-    run_simulation(parameters, population_data = population_data)$result
+test_that("rti sampling needs a synthetic population with school and workplace columns", {
+  parameters <- small_population_parameters(list(school_workplace_sampling = "rti"))
+  expect_error(generate_population_data(parameters), "needs a synthetic population, eg.*rti_population")
+  expect_error(run_simulation(parameters), "needs a synthetic population")
+
+  population <- make_synthetic_population()
+  people <- population$people
+  parameters <- rti_population_parameters(population)
+  without_workplaces <- read_synthetic_population(people[c("household_id", "age", "school_id")])
+  expect_error(generate_population_data(parameters, without_workplaces), "needs a workplace_id column")
+  without_schools <- read_synthetic_population(people[c("household_id", "age", "workplace_id")])
+  expect_error(generate_population_data(parameters, without_schools), "needs a school_id column")
+
+  # Household-only data can still be used with reference sampling
+  households_only <- read_synthetic_population(people[c("household_id", "age")])
+  expect_no_error(generate_population_data(small_population_parameters(), households_only))
+})
+
+test_that("rti sampling simulates the whole synthetic population", {
+  population <- make_synthetic_population()
+  parameters <- small_population_parameters(list(school_workplace_sampling = "rti"))
+  expect_error(
+    generate_population_data(parameters, population),
+    "human_population must be 520, not 500.*set_synthetic_population_size"
   )
+  parameters <- rti_population_parameters(population)
+  expect_length(generate_population_data(parameters, population)$initial_household_settings, 520)
 })
 
-test_that("reusing a population gives the same result on every run", {
-  parameters <- with_default_ach(get_parameters(list(simulation_time = 10, seed = 1)))
-  population_data <- generate_population_data(parameters)
+test_that("generate_population_data() validates the synthetic population", {
+  population <- make_synthetic_population()
+  population$metadata$n_people <- 1
+  expect_error(generate_population_data(small_population_parameters(), population), "n_people")
+})
 
-  expect_identical(
-    run_simulation(parameters, population_data = population_data)$result,
-    run_simulation(parameters, population_data = population_data)$result
+# Parameters and synthetic population for each way of sampling schools and workplaces
+sampling_modes <- list(
+  reference = list(
+    parameters = with_default_ach(get_parameters(list(simulation_time = 10, seed = 1))),
+    synthetic_population = NULL
+  ),
+  rti = list(
+    parameters = rti_population_parameters(make_synthetic_population(), list(simulation_time = 10)),
+    synthetic_population = make_synthetic_population()
   )
-})
+)
+
+for (mode in names(sampling_modes)) {
+  parameters <- sampling_modes[[mode]]$parameters
+  synthetic_population <- sampling_modes[[mode]]$synthetic_population
+
+  if (mode == "reference") {
+    test_that("run_simulation() gives the same result whether or not the population is provided", {
+      expected <- run_simulation(parameters)$result
+      actual <- run_simulation(parameters, population_data = generate_population_data(parameters))$result
+
+      expect_identical(actual, expected)
+    })
+  }
+
+  test_that(paste0("a population can be saved to a file and reused (", mode, ")"), {
+    population_data <- generate_population_data(parameters, synthetic_population)
+
+    path <- tempfile(fileext = ".rds")
+    on.exit(unlink(path))
+    saveRDS(population_data, path)
+    restored <- readRDS(path)
+
+    expect_identical(restored, population_data)
+    expect_identical(
+      run_simulation(parameters, population_data = restored)$result,
+      run_simulation(parameters, population_data = population_data)$result
+    )
+  })
+
+  test_that(paste0("reusing a population gives the same result on every run (", mode, ")"), {
+    population_data <- generate_population_data(parameters, synthetic_population)
+
+    expect_identical(
+      run_simulation(parameters, population_data = population_data)$result,
+      run_simulation(parameters, population_data = population_data)$result
+    )
+  })
+
+  test_that(paste0("the same seed gives the same population (", mode, ")"), {
+    expect_identical(
+      generate_population_data(parameters, synthetic_population),
+      generate_population_data(parameters, synthetic_population)
+    )
+  })
+}
