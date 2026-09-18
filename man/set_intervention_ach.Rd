@@ -37,18 +37,20 @@ intervention's efficacy is applied in the FOI calculation.}
 The input \code{parameters_list} with the \verb{intervention_<setting>_*}
 slots populated. For \code{setting = "joint"}, the \code{intervention_joint_coverage}
 slot is additionally populated from the intervention object's \code{coverage}
-field.
+field, and the intervention list and timestep are propagated to the
+workplace, school and leisure slots, whose \verb{_active} flags are switched on.
 }
 \description{
 Stores a single intervention object (as produced by \code{\link[=make_intervention]{make_intervention()}})
 into the parameters list under the chosen \code{setting}. The intervention is
 not yet allocated to specific locations — that happens later via
-\code{\link[=generate_intervention_switches]{generate_intervention_switches()}} when \code{\link[=create_variables]{create_variables()}} runs.
+\code{\link[=generate_intervention_data]{generate_intervention_data()}} when \code{\link[=run_simulation]{run_simulation()}} runs.
 
 Setting "joint" pools workplace + school + leisure into a single coverage
 budget; household is intentionally excluded from joint deployment. The
 four per-setting options ("workplace", "school", "leisure", "household")
-install the intervention independently into one setting.
+install the intervention independently into one setting. A joint
+intervention cannot be combined with setting-type specific interventions.
 
 Currently single-intervention only — passing more than one intervention
 will error. Multi-intervention support lives on a separate branch.
@@ -58,6 +60,7 @@ Other intervention:
 \code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
 \code{\link{efficacy_to_delta}()},
+\code{\link{generate_intervention_data}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},

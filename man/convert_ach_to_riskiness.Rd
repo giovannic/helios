@@ -40,9 +40,9 @@ Because the Wells-Riley exponent is small for our parameter values,
 approximately \code{(ACH_ref + kD) / (ACH_i + kD)} — i.e., it depends only on
 ACH. The constants \code{I}, \code{pi}, \code{RR_tv}, \code{t}, and \code{V} cancel.
 
-Called once per setting during \code{\link[=create_variables]{create_variables()}} init, immediately
+Called once per setting by \code{\link[=generate_population_data]{generate_population_data()}}, immediately
 after \code{\link[=generate_setting_specific_ach]{generate_setting_specific_ach()}}. The result is stored at
-\verb{<setting>_specific_riskiness} and used by \code{processes.R} to scale the
+\verb{<setting>_specific_riskiness} in the population data and used by \code{processes.R} to scale the
 per-setting FOI.
 }
 \seealso{

@@ -11,21 +11,14 @@ get_parameters(overrides = list(), archetype = "none")
 These parameters are:
 \itemize{
 \item \code{human_population}: the number of humans to include in the model
-\item \code{initial_proportion_child}: proportion of population initially in the 'child' age class
-\item \code{initial_proportion_adult}: proportion of population initially in the 'adult' age class
-\item \code{initial_proportion_elderly}: proportion of population initially in the 'elderly' age class
 \item \code{number_initial_S}: number of humans initially Susceptible (state = S)
 \item \code{number_initial_E}: number of humans initially Exposed (state = E)
 \item \code{number_initial_I}: number of humans initially Infectious (state = I)
 \item \code{number_initial_R}: number of humans initially Recovered (state = R)
 \item \code{seed}: a seed to run the simulation with
-\item \code{mean_household_size}: TBD
 \item \code{workplace_prop_max}: maximum size of a workplace as a proportion of total adult population size
 \item \code{workplace_a}: the a parameter for the Zipf-like distribution on workplace size
 \item \code{workplace_c}: the c parameter for the Zipf-like distribution on workplace size
-\item \code{school_prop_max}: maximum size of a school as a proporiton of total child population size
-\item \code{school_meanlog}: the meanlog parameter for the log-normal distribution on school size
-\item \code{school_sdlog}: the sdlog parameter for the log-normal distribution on school size
 \item \code{school_student_staff_ratio}: the number of students to each adult staff member
 \item \code{leisure_mean_number_settings}: TBD
 \item \code{leisure_mean_size}: TBD
@@ -62,9 +55,6 @@ calendar day. Days are counted from the start of the original run, so when
 resuming from a saved state the vectors must cover the whole run.
 \item \code{dt}: TBD
 \item \code{simulation_time}: TBD
-\item \code{household_distribution_country}: TBD
-\item \code{school_distribution_country}: TBD
-\item \code{workplace_distribution_country}: TBD
 \item \code{endemic_or_epidemic}: TBD
 \item \code{duration_immune}: TBD
 \item \code{prob_inf_external}: TBD
@@ -116,7 +106,7 @@ Wells-Riley Parameters (used by \code{convert_ach_to_riskiness()} to derive per-
 \item \code{wells_riley_time_in_room}: exposure window used inside the Wells-Riley calculation (denoted t); units = hours; default = 4
 }
 
-Intervention Parameters (populated internally by \code{set_intervention_ach()} and by \code{generate_intervention_switches()}; users do not normally set these directly. One block per scope, where \verb{<s>} is one of \code{joint}, \code{workplace}, \code{school}, \code{leisure} or \code{household}):
+Intervention Parameters (populated by \code{set_intervention_ach()}; users do not normally set these directly. One block per scope, where \verb{<s>} is one of \code{joint}, \code{workplace}, \code{school}, \code{leisure} or \code{household}):
 \itemize{
 \item \verb{intervention_<s>_active}: boolean flag set to TRUE when an intervention has been installed in scope \if{html}{\out{<s>}}. Default = FALSE
 \item \verb{intervention_<s>_list}: list of intervention objects (each as returned by \code{make_intervention()}) deployed in scope \if{html}{\out{<s>}}. Currently single-intervention only — list always has length 1 when active. Default = NULL
@@ -124,7 +114,6 @@ Intervention Parameters (populated internally by \code{set_intervention_ach()} a
 \item \verb{intervention_<s>_coverage_target}: what the coverage fraction applies to. Either "individuals" or "square_footage". Default = NULL
 \item \verb{intervention_<s>_coverage_type}: how locations are selected for coverage. Either "random" (uniform sampling) or "targeted_riskiness" (locations ranked in decreasing order of riskiness). Default = NULL
 \item \verb{intervention_<s>_timestep}: first simulation timestep at which the intervention's efficacy is applied in the FOI calculation. Default = NULL
-\item \verb{intervention_<setting>_covered} (per-setting scopes only — workplace/school/leisure/household): 0/1 vector of length equal to the number of locations in the setting, populated by the dispatcher to mark which locations received the intervention. Default = NULL
 }
 
 Setting-Specific Room Size Per Individual Parameters:
