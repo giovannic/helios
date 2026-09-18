@@ -417,7 +417,40 @@ test_that("seeded reference populations are identical to those before synthetic 
     human_population = 2000, number_initial_S = 1995, number_initial_E = 5, seed = 42
   )))
   expect_message(population_data <- generate_population_data(parameters_list))
-  expect_identical(population_data, readRDS(test_path("fixtures", "reference-population.rds")))
+  # Leisure settings are drawn differently since generate_initial_leisure() was vectorised
+  without_leisure <- function(population_data) {
+    population_data$initial_leisure_settings <- NULL
+    population_data$setting_sizes$leisure <- NULL
+    population_data
+  }
+  expect_identical(
+    without_leisure(population_data),
+    without_leisure(readRDS(test_path("fixtures", "reference-population.rds")))
+  )
+})
+
+test_that("generate_initial_leisure visits distinct settings on distinct days, weighted by size", {
+  parameters_list <- get_parameters(list(human_population = 20000, number_initial_S = 20000, number_initial_E = 0, seed = 1))
+  leisure_setting_sizes <- c(1, 2, 5, 10, 20, 50, 100, 200)
+  leisure <- generate_initial_leisure(parameters_list, leisure_setting_sizes)
+
+  expect_length(leisure, 20000)
+  expect_true(all(lengths(leisure) == 7))
+  visits <- do.call(rbind, leisure)
+  expect_false(any(apply(visits, 1, function(week) anyDuplicated(week[week != 0]) > 0)))
+  expect_equal(mean(rowSums(visits != 0)), parameters_list$leisure_mean_number_settings, tolerance = 0.05)
+  # Every day of the week is equally likely
+  expect_equal(colMeans(visits != 0), rep(mean(visits != 0), 7), tolerance = 0.05)
+  # Bigger settings are visited more, but less than in proportion to size, as each person visits a
+  # setting at most once
+  counts <- tabulate(visits[visits != 0], length(leisure_setting_sizes))
+  expect_true(all(diff(counts) > 0))
+  expect_lt(counts[8] / counts[1], 200)
+})
+
+test_that("generate_initial_leisure errors when there are too few settings to visit", {
+  parameters_list <- get_parameters(list(human_population = 1000, number_initial_S = 1000, number_initial_E = 0, seed = 1))
+  expect_error(generate_initial_leisure(parameters_list, c(5, 0, 3)), "too few leisure settings")
 })
 
 #==================================================#
