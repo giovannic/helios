@@ -22,6 +22,15 @@
 #'   school sizes from [`schools_usa`] and workplace sizes from a power-law
 #'   distribution. `"rti"` keeps the schools and workplaces of the synthetic
 #'   population that households are sampled from, and needs one to be given.
+#' * `non_residents`: whether schools and workplaces also hold members who live
+#'   outside the synthetic population (default `FALSE`). Only for
+#'   `school_workplace_sampling = "rti"`. A county extract only lists its
+#'   residents, so its settings are smaller than in reality. When `TRUE`, each
+#'   school and workplace is topped up to its size in the whole US synthetic
+#'   population with non-residents, who aren't simulated: at each timestep, the
+#'   number of them who are infectious is drawn from a binomial distribution with
+#'   the simulated population's prevalence of infectiousness. See
+#'   [generate_population_data()].
 #' * `leisure_mean_number_settings`: TBD
 #' * `leisure_mean_size`: TBD
 #' * `leisure_overdispersion_size`: TBD
@@ -138,6 +147,7 @@ get_parameters <- function(overrides = list(), archetype = "none") {
     workplace_c = 1.34,
     school_student_staff_ratio = 20,
     school_workplace_sampling = "reference",
+    non_residents = FALSE,
     leisure_prob_visit = 0.6,
     leisure_mean_number_settings = 3,
     leisure_mean_size = 50,
@@ -348,6 +358,13 @@ get_parameters <- function(overrides = list(), archetype = "none") {
       !(parameters$school_workplace_sampling %in% c("reference", "rti"))
   ) {
     stop('school_workplace_sampling must be either "reference" or "rti"')
+  }
+  if (!is.logical(parameters$non_residents) || length(parameters$non_residents) != 1 ||
+      is.na(parameters$non_residents)) {
+    stop("non_residents must be TRUE or FALSE")
+  }
+  if (parameters$non_residents && parameters$school_workplace_sampling != "rti") {
+    stop('non_residents = TRUE needs school_workplace_sampling = "rti": "reference" settings are generated at full size')
   }
 
   # Check if dt is < 1 and whether it can evenly divide 1 (i.e. 1/x should return an integer)

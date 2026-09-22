@@ -158,3 +158,44 @@ for (mode in names(sampling_modes)) {
     )
   })
 }
+
+# One school and three workplaces with known full sizes. Exactly one adult with a workplace
+# and no school becomes school staff, from workplace 1 or 3. Elderly people living alone make up
+# 200 people: sample_negbinom() never finishes for leisure in very small populations.
+non_resident_population <- function() {
+  others <- 190
+  data.frame(
+    household_id = c(1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 5 + seq_len(others)),
+    age = c(8, 10, 40, 12, 41, 42, 43, 70, 30, 31, rep(80, others)),
+    school_id = c(1, 1, NA, 1, NA, NA, NA, NA, NA, NA, rep(NA, others)),
+    workplace_id = c(NA, NA, 1, NA, 1, 1, 1, 2, 3, 3, rep(NA, others)),
+    school_full_size = c(50, 50, NA, 50, NA, NA, NA, NA, NA, NA, rep(NA, others)),
+    workplace_full_size = c(NA, NA, 10, NA, 10, 10, 10, NA, 2, 2, rep(NA, others))
+  )
+}
+
+test_that("schools and workplaces are topped up to their full size with non-residents", {
+  people <- non_resident_population()
+  without <- rti_population_parameters(people, list(number_initial_S = 499, number_initial_E = 1))
+  with <- rti_population_parameters(people, list(non_residents = TRUE, number_initial_S = 499, number_initial_E = 1))
+  population_without <- generate_population_data(without, people)
+  population_with <- generate_population_data(with, people)
+
+  # 47 students, and 3 staff for 50 students less the 1 for the 3 resident students
+  expect_identical(population_with$non_residents$school, 49L)
+  # The staff member isn't replaced at their workplace; workplace 2 has no full size
+  expect_identical(population_with$non_residents$workplace, c(6L, 0L, 0L))
+
+  # Nothing else changes, including random draws
+  expect_identical(population_without$non_residents, list(school = 0L, workplace = c(0L, 0L, 0L)))
+  population_with$non_residents <- population_without$non_residents
+  expect_identical(population_with, population_without)
+})
+
+test_that("non-residents need the full sizes of schools and workplaces", {
+  people <- non_resident_population()
+  parameters <- rti_population_parameters(people, list(non_residents = TRUE, number_initial_S = 499, number_initial_E = 1))
+  people$workplace_full_size <- NULL
+  expect_error(generate_population_data(parameters, people), "workplace_full_size")
+})
+

@@ -52,7 +52,14 @@
 #'
 #'   A county extract lists only the county's residents, so a school or
 #'   workplace that also has members who live elsewhere has fewer people than in
-#'   reality. A state extract has fewer such settings.
+#'   reality. A state extract has fewer such settings. The columns
+#'   `school_full_size` and `workplace_full_size` give the size of each
+#'   person's school and workplace in the whole US synthetic population, which
+#'   includes those non-residents: RTI's `total` students and `workers`. They are
+#'   `NA` for people with no school or workplace, and for new schools made with
+#'   `catch_all_schools = "synthetic"`, which have no non-residents. A school
+#'   moved to with `"nearest"` can have more students in the extract than its
+#'   full size. The `non_residents` parameter of [get_parameters()] uses them.
 #'
 #' @seealso [rti_cache_dir()] for where the data are cached, and
 #'   [generate_population_data()] to generate a population from the result.
@@ -90,7 +97,11 @@ rti_cached_extract <- function(fips, version, refresh) {
   path <- file.path(dir, paste0(fips, ".rds"))
 
   if (!refresh && file.exists(path)) {
-    return(readRDS(path))
+    extract <- readRDS(path)
+    if (rti_extract_is_current(extract)) {
+      return(extract)
+    }
+    message("The cached population for FIPS \"", fips, "\" is from an older version of helios: downloading it again")
   }
 
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -127,13 +138,21 @@ rti_cache_dir <- function() {
   dir
 }
 
+# Whether a cached extract has everything rti_reduce() needs. Extracts cached before setting
+# sizes in the whole US population were kept have no `workplaces`, and no school `total`.
+rti_extract_is_current <- function(extract) {
+  is.list(extract) && all(c("people", "schools", "workplaces", "catch_all_students") %in% names(extract)) &&
+    "total" %in% names(extract$schools)
+}
+
 rti_versions <- list(
   "2010_ver1" = list(year = "2010")
 )
 
 # Files extracted from each zip. Households and pums_p are needed to move students
-# out of catch-all schools with catch_all_schools = "nearest".
-rti_files <- c("synth_people", "synth_households", "schools", "pums_p")
+# out of catch-all schools with catch_all_schools = "nearest", and workplaces for their
+# size in the whole US population.
+rti_files <- c("synth_people", "synth_households", "schools", "workplaces", "pums_p")
 
 rti_raw_url <- "https://raw.githubusercontent.com/RTIInternational/SyntheticPopulations/main/"
 rti_media_url <- "https://media.githubusercontent.com/media/RTIInternational/SyntheticPopulations/main/"
@@ -259,8 +278,11 @@ rti_read_extract <- function(files) {
   )
   schools <- read_csv_columns(
     files[["schools"]],
-    c("sp_id", "prek", "kinder", "gr01_gr12", "latitude", "longitude", "source")
+    c("sp_id", "total", "prek", "kinder", "gr01_gr12", "latitude", "longitude", "source")
   )
+  # `workers` and the schools' `total` count members across the whole US synthetic population,
+  # including those who live outside the extract
+  workplaces <- read_csv_columns(files[["workplaces"]], c("sp_id", "workers"))
 
   # Students in catch-all schools, with what's needed to move them
   catch_all <- schools$sp_id[rti_is_catch_all(schools)]
@@ -294,6 +316,7 @@ rti_read_extract <- function(files) {
   list(
     people = people[c("sp_id", "sp_hh_id", "age", "sp_school_id", "sp_work_id")],
     schools = schools,
+    workplaces = workplaces,
     catch_all_students = students
   )
 }
@@ -303,11 +326,16 @@ rti_reduce <- function(extract, catch_all_schools, synthetic_school_size) {
     synthetic = rti_synthetic_schools(extract, synthetic_school_size),
     nearest = rti_nearest_schools(extract)
   )
+  # New catch-all schools have negative ids, so no full size
+  schools <- extract$schools
+  workplaces <- extract$workplaces
   data.frame(
     household_id = rti_renumber(people$sp_hh_id),
     age = as.integer(people$age),
     school_id = rti_renumber(people$sp_school_id),
-    workplace_id = rti_renumber(people$sp_work_id)
+    workplace_id = rti_renumber(people$sp_work_id),
+    school_full_size = as.integer(schools$total[match(people$sp_school_id, schools$sp_id)]),
+    workplace_full_size = as.integer(workplaces$workers[match(people$sp_work_id, workplaces$sp_id)])
   )
 }
 

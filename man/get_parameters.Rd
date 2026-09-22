@@ -25,6 +25,15 @@ workplaces by \code{\link[=generate_population_data]{generate_population_data()}
 school sizes from \code{\link{schools_usa}} and workplace sizes from a power-law
 distribution. \code{"rti"} keeps the schools and workplaces of the synthetic
 population that households are sampled from, and needs one to be given.
+\item \code{non_residents}: whether schools and workplaces also hold members who live
+outside the synthetic population (default \code{FALSE}). Only for
+\code{school_workplace_sampling = "rti"}. A county extract only lists its
+residents, so its settings are smaller than in reality. When \code{TRUE}, each
+school and workplace is topped up to its size in the whole US synthetic
+population with non-residents, who aren't simulated: at each timestep, the
+number of them who are infectious is drawn from a binomial distribution with
+the simulated population's prevalence of infectiousness. See
+\code{\link[=generate_population_data]{generate_population_data()}}.
 \item \code{leisure_mean_number_settings}: TBD
 \item \code{leisure_mean_size}: TBD
 \item \code{leisure_overdispersion_size}: TBD

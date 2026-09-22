@@ -170,6 +170,43 @@ test_that("a population can be generated from a downloaded extract in both sampl
   expect_length(population_data$setting_sizes$school, sum(!is.na(unique(synthetic$school_id))))
 })
 
+test_that("rti_population() gives the size of each person's school and workplace in the whole US population", {
+  local_cache_dir()
+  local_rti_mock()
+  synthetic <- rti_population("06075")
+
+  # Households in the fixture's order; catch-all students' new schools have no full size
+  expect_identical(synthetic$workplace_full_size, as.integer(c(
+    12, 3, NA, NA, NA, 250, 250, 40, NA, NA, 5, 3, NA, 5, rep(NA, 9), 12, 40, 40, NA
+  )))
+  expect_identical(synthetic$school_full_size, as.integer(c(
+    NA, NA, 350, 350, NA, 1200, NA, NA, NA, NA, NA, NA, NA, NA, 1200, 1200, NA, NA, 40, 40,
+    NA, NA, NA, NA, NA, NA, NA
+  )))
+
+  # "nearest" moves the catch-all students to schools with a full size
+  nearest <- rti_population("06075", catch_all_schools = "nearest")
+  expect_identical(nearest$school_full_size[c(17, 18, 27)], c(1L, 1L, 40L))
+})
+
+test_that("an extract cached by an older version is downloaded again", {
+  dir <- local_cache_dir()
+  calls <- local_rti_mock()
+  expected <- rti_population("06075")
+
+  # Before full sizes were kept, the cache had no workplaces or school totals
+  path <- file.path(dir, "rti", "2010_ver1", "06075.rds")
+  old <- readRDS(path)
+  old$workplaces <- NULL
+  old$schools$total <- NULL
+  saveRDS(old, path)
+
+  expect_message(actual <- rti_population("06075"), "older version")
+  expect_identical(actual, expected)
+  expect_equal(calls$zip, 2)
+  expect_true(rti_extract_is_current(readRDS(path)))
+})
+
 test_that("rti_population() downloads a real county", {
   # Check the opt-in first: skip_if_offline() itself uses the network
   skip_if(Sys.getenv("HELIOS_TEST_RTI_DOWNLOAD") != "true", "Set HELIOS_TEST_RTI_DOWNLOAD=true to run")

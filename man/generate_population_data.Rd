@@ -12,6 +12,8 @@ generate_population_data(parameters_list, synthetic_population = NULL)
 \item{synthetic_population}{Optional data frame with one row per person and
 columns \code{household_id} and \code{age}, and for \code{"rti"} sampling \code{school_id} and
 \code{workplace_id} (\code{NA} meaning none), such as returned by \code{\link[=rti_population]{rti_population()}}.
+With the \code{non_residents} parameter it also needs \code{school_full_size} and
+\code{workplace_full_size}.
 It isn't a parameter because it's large, and parameter lists are saved and reused. To
 simulate it, generate the population first and pass it to
 \code{\link[=run_simulation]{run_simulation()}} as \code{population_data}.}
@@ -40,6 +42,21 @@ their workplace. This needs a \code{synthetic_population} with \code{school_id} 
 people: see \code{\link[=set_synthetic_population_size]{set_synthetic_population_size()}}. The population can't be
 scaled down, because settings would be left with too few members.
 }
+
+A county extract only lists its residents, so its schools and workplaces are
+smaller than in reality. With the \code{non_residents} parameter, each school and
+workplace also has non-resident members, who aren't simulated:
+\itemize{
+\item A workplace has \code{workplace_full_size} members, less its resident workers
+(including any who become school staff).
+\item A school has \code{school_full_size} students and
+\code{ceiling(school_full_size / school_student_staff_ratio)} staff, less its
+resident students and staff.
+}
+
+Settings with more residents than their full size, or no full size, have no
+non-residents. The counts are in \code{non_residents} of the result: see
+\code{\link[=create_SE_process]{create_SE_process()}} for how they transmit.
 }
 \seealso{
 Other variables: 

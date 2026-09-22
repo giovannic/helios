@@ -39,7 +39,14 @@ A data frame with one row per person and integer columns
 
 A county extract lists only the county's residents, so a school or
 workplace that also has members who live elsewhere has fewer people than in
-reality. A state extract has fewer such settings.
+reality. A state extract has fewer such settings. The columns
+\code{school_full_size} and \code{workplace_full_size} give the size of each
+person's school and workplace in the whole US synthetic population, which
+includes those non-residents: RTI's \code{total} students and \code{workers}. They are
+\code{NA} for people with no school or workplace, and for new schools made with
+\code{catch_all_schools = "synthetic"}, which have no non-residents. A school
+moved to with \code{"nearest"} can have more students in the extract than its
+full size. The \code{non_residents} parameter of \code{\link[=get_parameters]{get_parameters()}} uses them.
 }
 \description{
 Downloads the RTI International U.S. Synthetic Population for a county or

@@ -247,3 +247,11 @@ test_that("set_synthetic_population_size() sets the population to the synthetic 
     number_initial_E = 5, number_initial_I = 3, number_initial_R = 2
   ))
 })
+
+test_that("non_residents must be TRUE or FALSE, and needs rti sampling", {
+  expect_false(get_parameters()$non_residents)
+  expect_error(get_parameters(list(non_residents = NA)), "non_residents must be TRUE or FALSE")
+  expect_error(get_parameters(list(non_residents = "yes")), "non_residents must be TRUE or FALSE")
+  expect_error(get_parameters(list(non_residents = TRUE)), "needs school_workplace_sampling")
+  expect_true(get_parameters(list(non_residents = TRUE, school_workplace_sampling = "rti"))$non_residents)
+})
