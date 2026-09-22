@@ -1,9 +1,9 @@
 #' Synthetic population for a US county or state from RTI International
 #'
 #' Downloads the RTI International U.S. Synthetic Population for a county or
-#' state, caches the parts helios needs, and reduces them to the people, schools
-#' and workplaces of each person. Later calls for the same `fips` and `version`
-#' read the cache and need no network access.
+#' state, caches the parts helios needs, and reduces them to the household, age,
+#' school and workplace of each person. Later calls for the same `fips` and
+#' `version` read the cache and need no network access.
 #'
 #' The data come from
 #' <https://github.com/RTIInternational/SyntheticPopulations> and are licensed
@@ -13,12 +13,9 @@
 #' Group quarters (such as care homes, prisons and dormitories) are not
 #' included.
 #'
-#' Some students in the RTI data are assigned to placeholder schools that have no
-#' location and totals such as 1,985,724, rather than to a real school. Every one
-#' of them attends a private school according to the census. Between about 5% and
-#' 20% of students are in these schools, depending on the location. The
-#' placeholder schools are always removed, and `catch_all_schools` sets what
-#' happens to their students:
+#' Some students in the RTI data are assigned to catch-all schools, which have
+#' no location, rather than to a real school. The catch-all schools are always
+#' removed, and `catch_all_schools` sets what happens to their students:
 #' * `"synthetic"` (the default) puts them in new private schools of
 #'   `synthetic_school_size` students. Households are taken in order of census
 #'   block group, so neighbours share a school, and each household's students stay
@@ -30,7 +27,6 @@
 #'   12), even if it is full. This is the fallback RTI describes in the "School
 #'   Assignments" section of the
 #'   [data's documentation](https://github.com/RTIInternational/SyntheticPopulations/blob/main/README.md#school-assignments).
-#'   Private schools can end up several times their real size.
 #'
 #' The cache doesn't depend on `catch_all_schools` or `synthetic_school_size`, so
 #' changing them doesn't download the data again.
@@ -40,8 +36,8 @@
 #'   Francisco). Numbers are not accepted, because they lose leading zeros.
 #' @param version The synthetic population release. Only `"2010_ver1"` is
 #'   available.
-#' @param catch_all_schools What to do with students in placeholder schools with
-#'   no location: `"synthetic"` or `"nearest"`. See Details.
+#' @param catch_all_schools What to do with students in catch-all schools:
+#'   `"synthetic"` or `"nearest"`. See Details.
 #' @param synthetic_school_size The number of students in each new private
 #'   school when `catch_all_schools = "synthetic"`. The default, 141, is the mean
 #'   size of US private schools in 2009–10: 4,700,119 students in 33,366 schools
@@ -50,23 +46,16 @@
 #'   Universe Survey*, NCES 2011-339).
 #' @param refresh If `TRUE`, download the data again even if it is cached.
 #'
-#' @return A `helios_synthetic_population`: a list with
-#'   * `people`: a data frame with one row per person and integer columns
-#'     `household_id`, `age`, `school_id` and `workplace_id` (`NA` means none).
-#'   * `schools`: a data frame with column `school_id`, one row per school. The
-#'     new schools made for `catch_all_schools = "synthetic"` come last.
-#'   * `workplaces`: a data frame with column `workplace_id`, one row per
-#'     workplace.
-#'   * `metadata`: a list with `source`, `version`, `fips`,
-#'     `catch_all_schools`, `synthetic_school_size` (`NA` unless
-#'     `catch_all_schools = "synthetic"`), `n_people` and `n_households`.
+#' @return A data frame with one row per person and integer columns
+#'   `household_id`, `age`, `school_id` and `workplace_id`. Ids are numbered
+#'   `1, 2, ...`, and `NA` means no school or workplace.
 #'
 #'   A county extract lists only the county's residents, so a school or
-#'   workplace that also has members who live elsewhere has fewer people in
-#'   `people` than in reality. A state extract has fewer such settings.
+#'   workplace that also has members who live elsewhere has fewer people than in
+#'   reality. A state extract has fewer such settings.
 #'
 #' @seealso [rti_cache_dir()] for where the data are cached, and
-#'   [read_synthetic_population()] to read data you already have.
+#'   [generate_population_data()] to generate a population from the result.
 #' @family data
 #' @export
 #' @examples
@@ -92,7 +81,7 @@ rti_population <- function(fips, version = "2010_ver1", catch_all_schools = "syn
   }
 
   extract <- rti_cached_extract(fips, version, refresh)
-  rti_reduce(extract, fips, version, catch_all_schools, synthetic_school_size)
+  rti_reduce(extract, catch_all_schools, synthetic_school_size)
 }
 
 # The extract for `fips`, from the cache if present, otherwise downloaded and cached
@@ -101,11 +90,7 @@ rti_cached_extract <- function(fips, version, refresh) {
   path <- file.path(dir, paste0(fips, ".rds"))
 
   if (!refresh && file.exists(path)) {
-    cached <- readRDS(path)
-    # Entries written in an older format are downloaded again
-    if (identical(cached$format, rti_cache_format)) {
-      return(cached$extract)
-    }
+    return(readRDS(path))
   }
 
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
@@ -114,7 +99,7 @@ rti_cached_extract <- function(fips, version, refresh) {
   # Write next to the final path and rename, so the cache never holds a partial file
   tmp <- tempfile("extract-", tmpdir = dir, fileext = ".tmp")
   on.exit(unlink(tmp), add = TRUE)
-  saveRDS(list(format = rti_cache_format, extract = extract), tmp)
+  saveRDS(extract, tmp)
   if (!file.rename(tmp, path)) {
     stop("Could not write the cached population to ", path)
   }
@@ -142,16 +127,13 @@ rti_cache_dir <- function() {
   dir
 }
 
-# Bump when the cached extract changes, so existing cache entries are rebuilt
-rti_cache_format <- 1L
-
 rti_versions <- list(
   "2010_ver1" = list(year = "2010")
 )
 
 # Files extracted from each zip. Households and pums_p are needed to move students
 # out of catch-all schools with catch_all_schools = "nearest".
-rti_files <- c("synth_people", "synth_households", "schools", "workplaces", "pums_p")
+rti_files <- c("synth_people", "synth_households", "schools", "pums_p")
 
 rti_raw_url <- "https://raw.githubusercontent.com/RTIInternational/SyntheticPopulations/main/"
 rti_media_url <- "https://media.githubusercontent.com/media/RTIInternational/SyntheticPopulations/main/"
@@ -279,7 +261,6 @@ rti_read_extract <- function(files) {
     files[["schools"]],
     c("sp_id", "prek", "kinder", "gr01_gr12", "latitude", "longitude", "source")
   )
-  workplaces <- read_csv_columns(files[["workplaces"]], "sp_id")
 
   # Students in catch-all schools, with what's needed to move them
   catch_all <- schools$sp_id[rti_is_catch_all(schools)]
@@ -313,29 +294,26 @@ rti_read_extract <- function(files) {
   list(
     people = people[c("sp_id", "sp_hh_id", "age", "sp_school_id", "sp_work_id")],
     schools = schools,
-    workplaces = workplaces,
     catch_all_students = students
   )
 }
 
-rti_reduce <- function(extract, fips, version, catch_all_schools, synthetic_school_size) {
-  fixed <- switch(catch_all_schools,
+rti_reduce <- function(extract, catch_all_schools, synthetic_school_size) {
+  people <- switch(catch_all_schools,
     synthetic = rti_synthetic_schools(extract, synthetic_school_size),
     nearest = rti_nearest_schools(extract)
   )
-
-  build_synthetic_population(
-    people = fixed$people,
-    schools = fixed$schools["sp_id"],
-    workplaces = extract$workplaces,
-    metadata = list(
-      source = "RTI International U.S. Synthetic Population",
-      version = version,
-      fips = fips,
-      catch_all_schools = catch_all_schools,
-      synthetic_school_size = if (catch_all_schools == "synthetic") synthetic_school_size else NA_real_
-    )
+  data.frame(
+    household_id = rti_renumber(people$sp_hh_id),
+    age = as.integer(people$age),
+    school_id = rti_renumber(people$sp_school_id),
+    workplace_id = rti_renumber(people$sp_work_id)
   )
+}
+
+# Renumbers ids 1, 2, ... in order of first appearance, keeping NA
+rti_renumber <- function(ids) {
+  match(ids, unique(ids[!is.na(ids)]))
 }
 
 # Some rows of the schools file are not real schools but catch-alls, at latitude and
@@ -350,7 +328,7 @@ rti_is_catch_all <- function(schools) {
 # every private-school student (SCH = 3) at a "schoolinformation.com" school.
 rti_school_sources <- c(public = "NCES", private = "schoolinformation.com")
 
-# Whether each school is private. Errors on unknown sources and on public catch-alls.
+# Whether each school is private
 rti_is_private <- function(schools) {
   unknown <- setdiff(unique(schools$source), rti_school_sources)
   if (length(unknown) > 0) {
@@ -372,15 +350,13 @@ rti_is_private <- function(schools) {
 # order of census block group, then household id, so neighbours share a school. A new
 # school is started once the current one has at least `size` students, which keeps each
 # household's students together. New schools get negative ids, which can't clash with
-# RTI's.
+# RTI's. Returns `extract$people` with the new schools.
 rti_synthetic_schools <- function(extract, size) {
   people <- extract$people
-  schools <- extract$schools
-  rti_is_private(schools)
-  located <- schools[!rti_is_catch_all(schools), , drop = FALSE]
+  rti_is_private(extract$schools)
   students <- extract$catch_all_students
   if (nrow(students) == 0) {
-    return(list(people = people, schools = located))
+    return(people)
   }
 
   household <- people$sp_hh_id[students$row]
@@ -391,10 +367,7 @@ rti_synthetic_schools <- function(extract, size) {
   school <- floor((cumsum(n_students) - n_students) / size) + 1
 
   people$sp_school_id[students$row] <- -school[match(household, households)]
-  new_schools <- located[rep(NA_integer_, max(school)), , drop = FALSE]
-  new_schools$sp_id <- -seq_len(max(school))
-  rownames(new_schools) <- NULL
-  list(people = people, schools = rbind(located, new_schools))
+  people
 }
 
 # The school column counting enrolment for each PUMS SCHG grade code
@@ -415,7 +388,7 @@ rti_grade_columns <- c(
 #
 # Each student goes to the private school nearest their home, among those with a location
 # and enrolment in their grade category. The grade comes from the census (PUMS SCHG), as in
-# RTI's assignment.
+# RTI's assignment. Returns `extract$people` with the new schools.
 rti_nearest_schools <- function(extract) {
   people <- extract$people
   schools <- extract$schools
@@ -423,7 +396,7 @@ rti_nearest_schools <- function(extract) {
   located <- !rti_is_catch_all(schools)
   students <- extract$catch_all_students
   if (nrow(students) == 0) {
-    return(list(people = people, schools = schools[located, , drop = FALSE]))
+    return(people)
   }
 
   if (any(is.na(students$sch) | students$sch != "3")) {
@@ -458,7 +431,7 @@ rti_nearest_schools <- function(extract) {
   }
 
   people$sp_school_id[students$row] <- schools$sp_id[school]
-  list(people = people, schools = schools[located, , drop = FALSE])
+  people
 }
 
 # For each point (lat, lon), the index of the nearest of (to_lat, to_lon) by great-circle
@@ -483,57 +456,20 @@ nearest_location <- function(lat, lon, to_lat, to_lon, chunk_size = 1000) {
   nearest[match(key, key[unique_points])]
 }
 
-# Reads only `columns` from a comma- or tab-separated file, treating "" and "X" as
-# missing. Columns in `character` are read as text, e.g. ids too long for an integer.
-# data.table::fread is much faster on large files, so it's used when installed.
-read_csv_columns <- function(path, columns, character = NULL,
-                             use_fread = requireNamespace("data.table", quietly = TRUE)) {
-  header <- read_header(path)
+# Reads only `columns` from a file, treating "" and "X" as missing. Columns in
+# `character` are read as text. Other ids too long for an integer are read as doubles, which
+# don't need the bit64 package.
+read_csv_columns <- function(path, columns, character = NULL) {
+  header <- names(data.table::fread(path, nrows = 0, colClasses = "character"))
   missing <- setdiff(columns, header)
   if (length(missing) > 0) {
     stop(basename(path), " is missing column(s): ", paste(missing, collapse = ", "))
   }
-
-  na_strings <- c("", "X")
-  sep <- if (grepl("\t", readLines(path, n = 1, warn = FALSE))) "\t" else ","
-  if (use_fread) {
-    x <- data.table::fread(
-      path,
-      sep = sep, select = columns, na.strings = na_strings,
-      colClasses = if (length(character) > 0) list(character = character),
-      data.table = FALSE, showProgress = FALSE
-    )
-  } else {
-    col_classes <- ifelse(header %in% columns, NA, "NULL")
-    col_classes[header %in% character] <- "character"
-    x <- utils::read.csv(
-      path,
-      sep = sep, colClasses = col_classes,
-      na.strings = na_strings, check.names = FALSE
-    )
-  }
-  normalise_missing(x[columns], character)
-}
-
-# Sets "" and "X" to NA in text columns, and converts text columns not in `character` to
-# numbers where they allow it. fread keeps quoted "X" as text, and user data frames may
-# have ids stored as text.
-normalise_missing <- function(x, character = NULL) {
-  for (column in names(x)) {
-    if (is.factor(x[[column]])) x[[column]] <- as.character(x[[column]])
-    if (is.character(x[[column]])) {
-      x[[column]][x[[column]] %in% c("", "X")] <- NA
-      if (!column %in% character) x[[column]] <- utils::type.convert(x[[column]], as.is = TRUE)
-    }
-  }
-  x
-}
-
-read_header <- function(path) {
-  line <- readLines(path, n = 1, warn = FALSE)
-  if (length(line) == 0) {
-    stop(basename(path), " is empty")
-  }
-  sep <- if (grepl("\t", line)) "\t" else ","
-  names(utils::read.csv(text = line, sep = sep, check.names = FALSE))
+  x <- data.table::fread(
+    path,
+    select = columns, na.strings = c("", "X"), integer64 = "double",
+    colClasses = if (length(character) > 0) list(character = character),
+    data.table = FALSE, showProgress = FALSE
+  )
+  x[columns]
 }

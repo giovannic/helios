@@ -28,7 +28,6 @@ LazyData: true
 Suggests:
     bench,
     bookdown,
-    data.table,
     digest,
     forcats,
     ggplot2,
@@ -44,6 +43,7 @@ Suggests:
     withr
 Config/testthat/edition: 3
 Imports:
+    data.table,
     individual (>= 0.1.18),
     dplyr,
     dqrng,

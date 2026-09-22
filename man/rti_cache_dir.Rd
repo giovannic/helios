@@ -19,9 +19,7 @@ cache.
 \seealso{
 Other data: 
 \code{\link{baseline_household_demographics_usa}},
-\code{\link{read_synthetic_population}()},
 \code{\link{rti_population}()},
-\code{\link{schools_usa}},
-\code{\link{validate_synthetic_population}()}
+\code{\link{schools_usa}}
 }
 \concept{data}

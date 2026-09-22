@@ -19,10 +19,8 @@ A data frame with 91 rows and 6 columns.
 \seealso{
 Other data: 
 \code{\link{baseline_household_demographics_usa}},
-\code{\link{read_synthetic_population}()},
 \code{\link{rti_cache_dir}()},
-\code{\link{rti_population}()},
-\code{\link{validate_synthetic_population}()}
+\code{\link{rti_population}()}
 }
 \concept{data}
 \keyword{datasets}

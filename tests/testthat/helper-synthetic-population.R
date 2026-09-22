@@ -13,11 +13,7 @@ make_synthetic_population <- function(num_households = 200) {
   people$school_id <- ifelse(people$age <= 18, person %% 4 + 1, NA)
   works <- (people$age >= 17 & people$age < 70 & people$age != 38) | people$age == 75
   people$workplace_id <- ifelse(works, person %% 10 + 1, NA)
-
-  schools <- data.frame(school_id = 1:4)
-  workplaces <- data.frame(workplace_id = 1:10)
-
-  read_synthetic_population(people, schools, workplaces)
+  people
 }
 
 # Parameters for a small population, with every setting's ACH set

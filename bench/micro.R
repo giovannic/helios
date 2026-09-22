@@ -57,7 +57,7 @@ for (human_population in split_numbers(args$sizes)) {
 if (args$rti != "none") {
   for (fips in split_strings(args$rti)) {
     synthetic_population <- rti_population(fips)
-    parameters <- bench_parameters("pandemic", nrow(synthetic_population$people), simulation_time = 1)
+    parameters <- bench_parameters("pandemic", nrow(synthetic_population), simulation_time = 1)
     parameters$school_workplace_sampling <- "rti"
     population <- generate_population_data(parameters, synthetic_population)
     record("rti_population", population, time_it(function() rti_population(fips)), fips)
