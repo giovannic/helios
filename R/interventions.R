@@ -1,7 +1,11 @@
 #' Update model parameters with intervention switches
 #'
 #' @description
+<<<<<<< HEAD
 #' Determines which locations have an intervention deployed.
+=======
+#' Function that determines which locations have an intervention deployed.
+>>>>>>> 91ac1f9 (added documentation)
 #' If `intervention_joint_active` is TRUE, coverage is computed across the
 #' workplace/school/leisure pool using `generate_joint_intervention_switches()`.
 #' Otherwise, per-setting coverage is computed for each setting whose
@@ -50,7 +54,7 @@ generate_intervention_switches <- function(parameters_list, variables_list) {
 #' and leisure pool (household is excluded from joint deployment by convention).
 #' Pools location sizes into a single budget, picks locations until cumulative
 #' size meets the target coverage, and splits the result back into per-setting
-#' coverage vectors stored at `intervention_<setting>_covered`.
+#' 0/1 switch vectors stored at `intervention_<setting>_covered`.
 #'
 #' Also propagates the joint intervention list and timestep into the per-setting
 #' state so that downstream efficacy calculation runs uniformly via the
@@ -110,7 +114,7 @@ generate_joint_intervention_switches <- function(parameters_list, variables_list
   } else if (parameters_list[["intervention_joint_coverage_type"]] == "targeted_riskiness") {
     # Rank by absolute Wells-Riley infection probability rather than by
     # per-setting riskiness. Riskiness is normalised against each setting's own
-    # median, so equal riskiness values in different settings do not represent
+    # mean, so equal riskiness values in different settings do not represent
     # equal absolute risk and are not comparable once pooled across settings.
     p_inf_list <- list(
       "workplace" = ach_to_p_inf(
@@ -169,7 +173,8 @@ generate_joint_intervention_switches <- function(parameters_list, variables_list
 
 #' Generate intervention switches for a particular setting
 #'
-#' Helper to generate the intervention coverage vector for one setting, as used
+#' Helper to generate the 0/1 switch vector indicating which locations in one
+#' setting receive the intervention (1 = covered, 0 = not covered), as used
 #' in `generate_intervention_switches()`. Coverage is interpreted as the
 #' fraction of total size to cover (size weighted either by number of
 #' individuals or by square footage). Locations are picked until cumulative
@@ -263,17 +268,16 @@ generate_setting_intervention_switches <- function(
 #' covered location) or a value that depends on the location's baseline ACH.
 #' Optional unit-to-unit variation can be added via `variation`.
 #'
-#' @param name A character string used as a human-readable label for the
-#' intervention.
+#' @param name A character string label for the intervention.
 #' @param delta_depends_on_baseline_ach Logical. If `FALSE` (default),
 #' `delta_function` is called with no arguments — the same delta is applied
 #' to every covered location. If `TRUE`, `delta_function` is called with the
 #' location's baseline ACH as its first argument — delta varies per location.
 #' @param delta_function A function returning the eACH that the intervention
-#' adds. Required (not NULL). When `delta_depends_on_baseline_ach = FALSE`,
+#' adds. When `delta_depends_on_baseline_ach = FALSE`, `delta_function`
 #' should take no arguments other than those in `delta_params`. When
 #' `delta_depends_on_baseline_ach = TRUE`, the first argument must be the
-#' baseline ACH.
+#' baseline ACH. Required (must not be NULL).
 #' @param delta_params A named list of additional arguments passed to
 #' `delta_function`. Default = `list()`.
 #' @param variation Logical. If `TRUE`, each location's delta is multiplied by
@@ -287,7 +291,7 @@ generate_setting_intervention_switches <- function(
 #' cover when the intervention is installed.
 #'
 #' @return A named list with the seven fields above, used as the intervention
-#' object consumed by [set_intervention_ach()] and downstream pipeline.
+#' object used by [set_intervention_ach()] and the downstream pipeline.
 #'
 #' @family intervention
 #' @export
@@ -467,9 +471,9 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
   # branch (clumped vs. independent coverage still to be settled).
   intervention <- interventions[[1]]
 
-  # Coverage vector: 1 if location is covered, 0 if not. NULL = full coverage
+  # 0/1 switch vector: 1 if location is covered, 0 if not. NULL = full coverage
   # (used by unit tests that bypass set_intervention_ach).
-  coverage_vector <- parameters_list[[paste0("intervention_", setting, "_covered")]]
+  coverage_switches <- parameters_list[[paste0("intervention_", setting, "_covered")]]
 
   # Call delta_function to get the delta for each location
   if (intervention$delta_depends_on_baseline_ach) {
@@ -497,8 +501,8 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
   }
 
   # Zero out delta for uncovered locations
-  if (!is.null(coverage_vector)) {
-    delta_i <- delta_i * coverage_vector
+  if (!is.null(coverage_switches)) {
+    delta_i <- delta_i * coverage_switches
   }
 
   total_delta <- delta_i
@@ -534,15 +538,16 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
 #' Converts a UV-C intervention's photophysical parameters into an
 #' equivalent air-change rate (eACH) that can be used as a delta in the
 #' Wells-Riley framework. The conversion is
-#' `delta = f * E_avg * k * 3.6`, where the factor 3.6 converts
-#' (per-second) inactivation to (per-hour) eACH.
+#' `delta = f * E_avg * k * 3.6`. The factor 3.6 assumes `E_avg` is in
+#' µW/cm^2 and `k` is in cm^2/mJ: it combines the µW to mW conversion (1e-3)
+#' with the per-second to per-hour conversion (3600). Supplying `E_avg` in
+#' mW/cm^2 would overstate eACH by a factor of 1000.
 #'
 #' @param f Fraction of the room volume that is irradiated (dimensionless,
 #' in `[0, 1]`).
-#' @param E_avg Average fluence rate within the irradiated volume
-#' (µW/cm^2 for far-UVC, or any unit consistent with `k`).
-#' @param k UV inactivation constant for the target pathogen
-#' (units consistent with `E_avg`; product `E_avg * k` is per-second).
+#' @param E_avg Average fluence rate within the irradiated volume (µW/cm^2).
+#' @param k UV inactivation (susceptibility) constant for the target pathogen
+#' (cm^2/mJ).
 #'
 #' @return Equivalent ACH contribution from UV-C (units: 1/hour).
 #'
