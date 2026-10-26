@@ -255,19 +255,13 @@ create_variables <- function(parameters_list) {
   }
 
   # Calculate location-specific efficacy from ACH using W-R for each setting
-<<<<<<< HEAD
-  # with an active intervention. The coverage vector
-  # (intervention_<setting>_covered) was already populated by
-  # generate_intervention_switches() above and is consumed inside
-  # calculate_efficacy_from_ach to zero out delta
-  # for uncovered locations.
-=======
-  # with an active intervention. The 0/1 switch vector
+  # with an active intervention. The coverage vector is a switch
   # (intervention_<setting>_covered) was already populated by
   # generate_intervention_switches() above and is used inside
-  # calculate_efficacy_from_ach() to zero out delta for uncovered locations.
->>>>>>> 91ac1f9 (added documentation)
-  if (isTRUE(parameters_list$intervention_workplace_active)) {
+  # calculate_efficacy_from_ach to zero out delta
+  # for uncovered locations.
+
+    if (isTRUE(parameters_list$intervention_workplace_active)) {
     parameters_list$workplace_specific_efficacy <- calculate_efficacy_from_ach(
       ach_values      = parameters_list$workplace_specific_ach,
       parameters_list = parameters_list,
