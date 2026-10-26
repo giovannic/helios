@@ -18,7 +18,8 @@ generate_setting_intervention_switches(
 \item{setting}{One of \code{"workplace"}, \code{"school"}, \code{"leisure"}, or \code{"household"}}
 }
 \description{
-Helper to generate the intervention coverage vector for one setting, as used
+Helper to generate the 0/1 switch vector indicating which locations in one
+setting receive the intervention (1 = covered, 0 = not covered), as used
 in \code{generate_intervention_switches()}. Coverage is interpreted as the
 fraction of total size to cover (size weighted either by number of
 individuals or by square footage). Locations are picked until cumulative

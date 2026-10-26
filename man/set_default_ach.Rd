@@ -31,9 +31,8 @@ setting-specific switch stays FALSE, the model treats this setting as
 "no per-location variation" — every location in the setting gets ACH equal
 to \code{ach}.
 
-For every setting used in a simulation, the user must call either
-\code{\link[=set_setting_specific_ach]{set_setting_specific_ach()}} (distribution) or \code{\link[=set_default_ach]{set_default_ach()}}
-(uniform); otherwise \code{create_variables()} will error.
+Each setting already has a uniform default ACH set by \code{\link[=get_parameters]{get_parameters()}},
+so this function is only needed to override that default.
 }
 \seealso{
 Other setting-specific ACH: 

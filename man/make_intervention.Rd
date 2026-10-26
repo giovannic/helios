@@ -15,8 +15,7 @@ make_intervention(
 )
 }
 \arguments{
-\item{name}{A character string used as a human-readable label for the
-intervention.}
+\item{name}{A character string label for the intervention.}
 
 \item{delta_depends_on_baseline_ach}{Logical. If \code{FALSE} (default),
 \code{delta_function} is called with no arguments — the same delta is applied
@@ -24,10 +23,10 @@ to every covered location. If \code{TRUE}, \code{delta_function} is called with 
 location's baseline ACH as its first argument — delta varies per location.}
 
 \item{delta_function}{A function returning the eACH that the intervention
-adds. Required (not NULL). When \code{delta_depends_on_baseline_ach = FALSE},
+adds. When \code{delta_depends_on_baseline_ach = FALSE}, \code{delta_function}
 should take no arguments other than those in \code{delta_params}. When
 \code{delta_depends_on_baseline_ach = TRUE}, the first argument must be the
-baseline ACH.}
+baseline ACH. Required (must not be NULL).}
 
 \item{delta_params}{A named list of additional arguments passed to
 \code{delta_function}. Default = \code{list()}.}
@@ -46,7 +45,7 @@ cover when the intervention is installed.}
 }
 \value{
 A named list with the seven fields above, used as the intervention
-object consumed by \code{\link[=set_intervention_ach]{set_intervention_ach()}} and downstream pipeline.
+object used by \code{\link[=set_intervention_ach]{set_intervention_ach()}} and the downstream pipeline.
 }
 \description{
 Defines a single intervention that can be installed into one or more
