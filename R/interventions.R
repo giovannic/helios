@@ -15,6 +15,9 @@
 #' @export
 generate_intervention_switches <- function(parameters_list, variables_list) {
   setting_types <- c("workplace", "school", "leisure", "household")
+
+  # Joint and per-setting interventions are mutually exclusive: error if both
+  # have been configured
   if (
     isTRUE(parameters_list$intervention_joint_active) &
     any(unlist(parameters_list[paste0("intervention_", setting_types, "_active")]))
@@ -25,11 +28,15 @@ generate_intervention_switches <- function(parameters_list, variables_list) {
   }
 
   if (isTRUE(parameters_list$intervention_joint_active)) {
+    # Joint intervention: allocate coverage across the pooled workplace,
+    # school and leisure locations in a single pass
     parameters_list <- generate_joint_intervention_switches(
       parameters_list,
       variables_list
     )
   } else {
+    # Per-setting interventions: allocate coverage separately for each setting
+    # that has an active intervention; settings without one are skipped
     for (setting in setting_types) {
       if (isTRUE(parameters_list[[paste0("intervention_", setting, "_active")]])) {
         parameters_list <- generate_setting_intervention_switches(
@@ -187,6 +194,9 @@ generate_setting_intervention_switches <- function(
     variables_list,
     setting
 ) {
+  # Size of each location, measured either as the number of individuals or as
+  # floor area (individuals multiplied by size_per_individual_<setting>).
+  # Leisure sizes are stored in parameters_list rather than variables_list.
   if (parameters_list[[paste0("intervention_", setting, "_coverage_target")]] == "individuals") {
     if (setting == "leisure") {
       setting_size <- parameters_list$setting_sizes$leisure
@@ -207,12 +217,13 @@ generate_setting_intervention_switches <- function(
     stop("coverage_target must be either individuals or square_footage")
   }
 
-  total <- sum(setting_size)
+  total_setting_size <- sum(setting_size)
   intervention_switches <- rep(0, length(setting_size))
   interventions <- parameters_list[[paste0("intervention_", setting, "_list")]]
-  total_with_intervention <- floor(interventions[[1]]$coverage * total)
+  total_with_intervention <- floor(interventions[[1]]$coverage * total_setting_size)
 
-
+  # Select locations until their cumulative size meets the coverage budget,
+  # either in random order or in decreasing order of riskiness
   if (parameters_list[[paste0("intervention_", setting, "_coverage_type")]] == "random") {
     sum <- 0
     indices <- c()
@@ -454,8 +465,7 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
   t    <- parameters_list$wells_riley_time_in_room
   V    <- parameters_list[[paste0("volume_per_person_", setting)]]
 
-  n           <- length(ach_values)
-  total_delta <- rep(0, n)
+  n <- length(ach_values)
 
   interventions <- parameters_list[[paste0("intervention_", setting, "_list")]]
 
@@ -501,10 +511,8 @@ calculate_efficacy_from_ach <- function(ach_values, parameters_list, setting) {
     delta_i <- delta_i * coverage_switches
   }
 
-  total_delta <- delta_i
-
   alpha_pre  <- ach_values + kD
-  alpha_post <- ach_values + kD + total_delta
+  alpha_post <- ach_values + kD + delta_i
 
   p_pre  <- 1 - exp(-r * (I * pi / (alpha_pre  * V)) * RRtv * t)
   p_post <- 1 - exp(-r * (I * pi / (alpha_post * V)) * RRtv * t)
@@ -573,7 +581,7 @@ uv_to_delta <- function(f, E_avg, k) {
 #' @param kD Natural decay rate of the airborne pathogen (1/hour).
 #' Default = 0.64.
 #' @param r Probability of infection per inhaled FFU. Default = 1.37e-2.
-#' @param pi Emission rate of infectious units (FFU/hour). Default = 27.
+#' @param pi Emission rate of infectious units (FFU/hour). Default = 365.
 #' @param I Number of infectious individuals in the location. Default = 1
 #' (and cancels in the efficacy ratio).
 #' @param RRtv Respiratory rate * tidal volume (m^3/hour). Default = 0.45.
@@ -591,7 +599,7 @@ ach_to_efficacy <- function(baseline_ach,
                             V,
                             kD   = 0.64,
                             r    = 1.37e-2,
-                            pi   = 27,
+                            pi   = 365,
                             I    = 1,
                             RRtv = 0.45,
                             t    = 4) {
@@ -627,7 +635,7 @@ ach_to_efficacy <- function(baseline_ach,
 #' @param kD Natural decay rate of the airborne pathogen (1/hour).
 #' Default = 0.64.
 #' @param r Probability of infection per inhaled FFU. Default = 1.37e-2.
-#' @param pi Emission rate of infectious units (FFU/hour). Default = 27.
+#' @param pi Emission rate of infectious units (FFU/hour). Default = 365.
 #' @param I Number of infectious individuals. Default = 1.
 #' @param RRtv Respiratory rate * tidal volume (m^3/hour). Default = 0.45.
 #' @param t Exposure window (hours). Default = 4.
@@ -642,7 +650,7 @@ efficacy_to_delta <- function(target_efficacy,
                               V,
                               kD   = 0.64,
                               r    = 1.37e-2,
-                              pi   = 27,
+                              pi   = 365,
                               I    = 1,
                               RRtv = 0.45,
                               t    = 4) {

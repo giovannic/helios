@@ -216,7 +216,7 @@ get_parameters <- function(overrides = list(), archetype = "none") {
 
     # W-R parameters (sources in the roxygen block above). r and pi are a
     # matched pair: 1/r = 73 FFU per quantum, so pi = 365 is 5.0 quanta/hour.
-    wells_riley_emission_rate = 365, # pi, FFU/hour; Blatchley Table 2 scenario ?
+    wells_riley_emission_rate = 365, # pi, FFU/hour; Blatchley Table 2 scenario C
     wells_riley_decay_rate = 0.64, # k_D, natural decay rate (1/hr)
     wells_riley_infection_prob_per_ffu = 1.37e-2, # r, per FFU; -log(1-18/34)/55
     wells_riley_respiratory_rate_factor = 0.45, # RR_tv, m^3/hr
