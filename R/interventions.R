@@ -608,7 +608,8 @@ ach_to_efficacy <- function(baseline_ach,
   alpha_post <- baseline_ach + kD + delta
   p_pre  <- 1 - exp(-A / alpha_pre)
   p_post <- 1 - exp(-A / alpha_post)
-  return(1 - p_post / p_pre)
+  efficacy <- 1 - p_post / p_pre
+  return(efficacy)
 }
 
 #' Wells-Riley delta-eACH required to hit a target efficacy
