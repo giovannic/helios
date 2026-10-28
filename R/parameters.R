@@ -95,7 +95,7 @@
 #' * `volume_per_person_household`: average indoor air volume per person in a household; default = 50 (assumes ~20 m^2 floor area at 2.5 m height)
 #'
 #' Wells-Riley Parameters (used by `convert_ach_to_riskiness()` to derive per-location riskiness from ACH, and by `calculate_efficacy_from_ach()` to derive per-location intervention efficacy from ACH and the intervention delta - the extra equivalent ACH an intervention adds to covered locations, see [make_intervention()]):
-#' * `wells_riley_emission_rate`: rate at which an infectious individual emits airborne infectious units (denoted pi); units = FFU (focus-forming units)/hour; default = 365, scenario C in Blatchley & Cui (2023) Table 2, and the lowest of them - speaking is 365 and singing 2335
+#' * `wells_riley_emission_rate`: rate at which an infectious individual emits airborne infectious units (denoted pi); units = FFU (focus-forming units)/hour; default = 365 (Blatchley & Cui 2023, Table 2, scenario C: speaking; scenario D, singing, is 2335)
 #' * `wells_riley_decay_rate`: natural decay rate of airborne pathogens (denoted k_D); units = 1/hour; default = 0.64 (Blatchley & Cui 2023)
 #' * `wells_riley_infection_prob_per_ffu`: probability of infection per inhaled FFU (focus-forming unit) (denoted r); units = 1/FFU; default = 1.37e-2, an exponential fit to Killingley et al. (2022), in which 10 TCID50 (55 FFU) infected 18 of 34 volunteers: `-log(1 - 18/34) / 55`
 #' * `wells_riley_respiratory_rate_factor`: respiratory rate multiplied by tidal volume (denoted RR_tv); units = m^3/hour; default = 0.45 (15 breaths/minute at 500 ml)

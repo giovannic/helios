@@ -465,7 +465,7 @@ test_that("calculate_efficacy_from_ach() variation does not inflate the mean del
 })
 
 #=========================================================#
-#===== uv_to_delta() / ach_to_efficacy() / efficacy_to_delta() =====#
+#===== uv_to_delta() / delta_to_efficacy() / efficacy_to_delta() =====#
 #=========================================================#
 
 test_that("uv_to_delta() scales linearly with fraction irradiated and fluence rate", {
@@ -474,23 +474,23 @@ test_that("uv_to_delta() scales linearly with fraction irradiated and fluence ra
   expect_equal(uv_to_delta(f = 0, E_avg = 5, k = 5), 0)
 })
 
-test_that("ach_to_efficacy() returns 0 when delta is 0", {
+test_that("delta_to_efficacy() returns 0 when delta is 0", {
   expect_equal(
-    ach_to_efficacy(baseline_ach = 4, delta = 0, V = 27),
+    delta_to_efficacy(baseline_ach = 4, delta = 0, V = 27),
     0
   )
 })
 
-test_that("ach_to_efficacy() increases towards 1 as delta grows", {
-  low  <- ach_to_efficacy(baseline_ach = 4, delta = 1, V = 27)
-  high <- ach_to_efficacy(baseline_ach = 4, delta = 20, V = 27)
+test_that("delta_to_efficacy() increases towards 1 as delta grows", {
+  low  <- delta_to_efficacy(baseline_ach = 4, delta = 1, V = 27)
+  high <- delta_to_efficacy(baseline_ach = 4, delta = 20, V = 27)
 
   expect_true(low > 0 && low < 1)
   expect_true(high > low)
   expect_true(high < 1)
 })
 
-test_that("efficacy_to_delta() is the inverse of ach_to_efficacy()", {
+test_that("efficacy_to_delta() is the inverse of delta_to_efficacy()", {
   baseline_ach <- 4
   V <- 27
   target_efficacy <- 0.5
@@ -501,7 +501,7 @@ test_that("efficacy_to_delta() is the inverse of ach_to_efficacy()", {
     V = V
   )
 
-  realised_efficacy <- ach_to_efficacy(
+  realised_efficacy <- delta_to_efficacy(
     baseline_ach = baseline_ach,
     delta = delta,
     V = V

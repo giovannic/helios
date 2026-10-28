@@ -29,8 +29,8 @@ mW/cm^2 would overstate eACH by a factor of 1000.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{efficacy_to_delta}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},

@@ -594,15 +594,15 @@ uv_to_delta <- function(f, E_avg, k) {
 #'
 #' @family intervention
 #' @export
-ach_to_efficacy <- function(baseline_ach,
-                            delta = 0,
-                            V,
-                            kD   = 0.64,
-                            r    = 1.37e-2,
-                            pi   = 365,
-                            I    = 1,
-                            RRtv = 0.45,
-                            t    = 4) {
+delta_to_efficacy <- function(baseline_ach,
+                              delta = 0,
+                              V,
+                              kD   = 0.64,
+                              r    = 1.37e-2,
+                              pi   = 365,
+                              I    = 1,
+                              RRtv = 0.45,
+                              t    = 4) {
   A <- r * I * pi * RRtv * t / V
   alpha_pre  <- baseline_ach + kD
   alpha_post <- baseline_ach + kD + delta
@@ -615,7 +615,7 @@ ach_to_efficacy <- function(baseline_ach,
 #' Wells-Riley delta-eACH required to hit a target efficacy
 #'
 #' @description
-#' Inverse of [ach_to_efficacy()]. Given a desired efficacy at a hypothetical
+#' Inverse of [delta_to_efficacy()]. Given a desired efficacy at a hypothetical
 #' location with a specified baseline ACH and air volume per person, returns
 #' the delta-eACH the intervention needs to add to produce that efficacy.
 #' Useful for calibrating constant-delta interventions to match a target

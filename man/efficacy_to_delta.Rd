@@ -42,7 +42,7 @@ The required delta-eACH (1/hour), suitable for use as the return
 value of a constant-delta \code{delta_function} in \code{\link[=make_intervention]{make_intervention()}}.
 }
 \description{
-Inverse of \code{\link[=ach_to_efficacy]{ach_to_efficacy()}}. Given a desired efficacy at a hypothetical
+Inverse of \code{\link[=delta_to_efficacy]{delta_to_efficacy()}}. Given a desired efficacy at a hypothetical
 location with a specified baseline ACH and air volume per person, returns
 the delta-eACH the intervention needs to add to produce that efficacy.
 Useful for calibrating constant-delta interventions to match a target
@@ -58,8 +58,8 @@ equal to) \code{target_efficacy}.
 }
 \seealso{
 Other intervention: 
-\code{\link{ach_to_efficacy}()},
 \code{\link{calculate_efficacy_from_ach}()},
+\code{\link{delta_to_efficacy}()},
 \code{\link{generate_intervention_switches}()},
 \code{\link{generate_joint_intervention_switches}()},
 \code{\link{generate_setting_intervention_switches}()},
