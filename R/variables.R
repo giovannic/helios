@@ -522,10 +522,10 @@ generate_initial_schools_bootstrap <- function(
 
   # Calculating number of children and assigning them to schools
   if (parameters_list$school_distribution_country == "UK") {
-    empirical_school_sizes <- schools_uk$`headcount of pupils`
+    empirical_school_sizes <- helios::schools_uk$`headcount of pupils`
     empirical_school_sizes <- empirical_school_sizes[empirical_school_sizes > 0]
   } else if (parameters_list$school_distribution_country == "USA") {
-    schools_usa_total <- dplyr::filter(schools_usa, type == "total")
+    schools_usa_total <- dplyr::filter(helios::schools_usa, type == "total")
     empirical_school_sizes <- rep(
       schools_usa_total$size_midpoint,
       schools_usa_total$count
@@ -871,10 +871,10 @@ generate_initial_households_bootstrap <- function(parameters_list) {
 
   ## Using data from RTI's synthetic population for San Francisco to bootstrap https://fred.publichealth.pitt.edu/syn_pops
   if (country == "USA") {
-    ref_panel <- baseline_household_demographics_usa
+    ref_panel <- helios::baseline_household_demographics_usa
   } else if (country == "UK") {
     ## Using Hinch et al's synthetic population from ONS
-    ref_panel <- baseline_household_demographics_uk
+    ref_panel <- helios::baseline_household_demographics_uk
   }
 
   # Creating blank age-class vectors and household assignment vectors to populate
