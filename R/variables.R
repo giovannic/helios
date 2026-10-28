@@ -5,6 +5,13 @@
 #' @family variables
 #' @export
 create_variables <- function(parameters_list) {
+  # Set the seed once for the whole population. The generators below then
+  # continue one random stream instead of each restarting it.
+  if (!("seed" %in% names(parameters_list))) {
+    stop("parameters list must contain a variable called seed")
+  }
+  set.seed(parameters_list$seed)
+
   # Disease state variable
   disease_states <- c("S", "E", "I_mild", "I_hosp", "R", "D")
   initial_disease_states <- generate_initial_disease_states(
@@ -325,12 +332,6 @@ generate_initial_disease_states <- function(parameters_list) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
-
-  # Set the seed from the parameter list:
-  set.seed(parameters_list$seed)
 
   # Create a vector of disease states of length human_population:
   initial_disease_states <- rep("S", parameters_list$human_population)
@@ -395,9 +396,6 @@ generate_initial_age_classes <- function(parameters_list) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
 
   # Check the initial age class proportions sum to 1:
   if (
@@ -410,9 +408,6 @@ generate_initial_age_classes <- function(parameters_list) {
   ) {
     stop("initial age class proportions do not sum to 1")
   }
-
-  # Set the seed stored in the parameter list:
-  set.seed(parameters_list$seed)
 
   # Store age group proportions in a single vector:
   age_group_proportions <- c(
@@ -445,9 +440,6 @@ generate_initial_schools <- function(parameters_list, age_class_variable) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("school_meanlog" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called school_meanlog")
   }
@@ -459,8 +451,6 @@ generate_initial_schools <- function(parameters_list, age_class_variable) {
       "parameters list must contain a variable called school_student_staff_ratio"
     )
   }
-
-  set.seed(parameters_list$seed)
 
   # Assign children to schools
   num_children <- age_class_variable$get_size_of("child")
@@ -519,9 +509,6 @@ generate_initial_schools_bootstrap <- function(
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("school_student_staff_ratio" %in% names(parameters_list))) {
     stop(
       "parameters list must contain a variable called school_student_staff_ratio"
@@ -534,8 +521,6 @@ generate_initial_schools_bootstrap <- function(
   }
 
   # Calculating number of children and assigning them to schools
-  set.seed(parameters_list$seed)
-
   if (parameters_list$school_distribution_country == "UK") {
     empirical_school_sizes <- schools_uk$`headcount of pupils`
     empirical_school_sizes <- empirical_school_sizes[empirical_school_sizes > 0]
@@ -616,9 +601,6 @@ generate_initial_workplaces <- function(
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("workplace_prop_max" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called workplace_prop_max")
   }
@@ -647,7 +629,6 @@ generate_initial_workplaces <- function(
   }
 
   # Calculating number of unassigned adults and assigning them to workplaces
-  set.seed(parameters_list$seed)
   index_not_school <- school_variable$get_index_of(values = c("0"))$to_vector()
   index_adults <- age_class_variable$get_index_of("adult")$to_vector()
   index_unassigned_adults <- intersect(index_not_school, index_adults)
@@ -695,9 +676,6 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("leisure_mean_size" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called leisure_mean_size")
   }
@@ -711,9 +689,6 @@ generate_initial_leisure <- function(parameters_list, leisure_setting_sizes) {
       "parameters list must contain a variable called leisure_mean_number_settings"
     )
   }
-
-  # Setting the seed
-  set.seed(parameters_list$seed)
 
   # Calculating the number of leisure visits that each person makes per week
   leisure_visits_per_person_per_week <- rpois(
@@ -776,15 +751,9 @@ generate_initial_households <- function(parameters_list, age_class_variable) {
   if (!("human_population" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called human_population")
   }
-  if (!("seed" %in% names(parameters_list))) {
-    stop("parameters list must contain a variable called seed")
-  }
   if (!("mean_household_size" %in% names(parameters_list))) {
     stop("parameters list must contain a variable called mean_household_size")
   }
-
-  # Setting seed
-  set.seed(parameters_list$seed)
 
   ## Checking population size N is the same as implied by age_class_variable
   if (
